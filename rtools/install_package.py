@@ -12,7 +12,7 @@ import sys
 from .bootstrap_r import execute_r
 from .github_release import save_url, release_info
 from .rpath import r_library_path, r_pkg_path, r_pkg_version
-from .utils import mkdtemp
+from .utils import mkdtemp, set_env_tmpdir
 from .fs import getvolumeinfo, hardlinks_supported, junctions_supported
 
 PACKAGE_NAME = 'arcgisbinding'
@@ -46,6 +46,11 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         arcpy.AddError("The ArcGIS R bridge requires ArcGIS Pro 1.1 or later.")
         sys.exit()
 
+    # set an R-compatible temporary folder, if needed.
+    orig_tmpdir = os.getenv("TMPDIR")
+    if not orig_tmpdir:
+        env_tmpdir = set_env_tmpdir()
+
     download_url = release_info()[0]
     # we have a release, write it to disk for installation
     arcpy.AddMessage(download_url)
@@ -59,6 +64,9 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             execute_r('Rcmd', 'INSTALL', package_path)
         else:
             arcpy.AddError("No package found at {}".format(package_path))
+
+    # return TMPDIR to its original value; only need it for Rcmd INSTALL
+    set_env_tmpdir(orig_tmpdir)
 
     # TODO: still do this if installing to Pro, but 10.3.1 is installed, check
     #       registry to find it in this case.
