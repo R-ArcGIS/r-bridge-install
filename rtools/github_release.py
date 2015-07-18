@@ -28,20 +28,27 @@ def save_url(url, output_path):
         with open(output_path, 'wb') as f:
             f.write(r.read())
     else:
-        arcpy.AddError("Failed to download '{}'".format(url))
+        arcpy.AddError("Failed to download '{}', invalid content.".format(url))
 
 
 def parse_json_url(url):
     """Parse and return a JSON response from a URL."""
     res = None
-    r = request.urlopen(url)
+    try:
+        r = request.urlopen(url)
+    except request.URLError as e:
+        arcpy.AddError("Failed to download '{}', error: {}.".format(
+            url, e))
+        sys.exit()
+
     if r.code == 200:
         # urllib doesn't know bytestreams
         str_response = r.read().decode('utf-8')
         res = json.loads(str_response)
     else:
-        print("Failed to download '{}'".format(url))
+        arcpy.AddError("Failed to download '{}', invalid response.".format(url))
         sys.exit()
+
     return res
 
 
@@ -63,7 +70,8 @@ def release_info():
             tag = json_r['tag_name']
 
     if tag is None or download_url is None:
-        print("Invalid GitHub API response for URL '{}'".format(
+        arcpy.AddError("Invalid GitHub API response for URL '{}'".format(
             latest_url))
+        sys.exit()
 
     return (download_url, tag)

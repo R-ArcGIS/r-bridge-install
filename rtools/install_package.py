@@ -52,6 +52,11 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         env_tmpdir = set_env_tmpdir()
 
     download_url = release_info()[0]
+    if download_url is None:
+        arcpy.AddError(
+            "Unable to get current release information. Check internet connection.")
+        sys.exit()
+
     # we have a release, write it to disk for installation
     arcpy.AddMessage(download_url)
     with mkdtemp() as temp_dir:
