@@ -36,9 +36,12 @@ First, make sure you've installed an appropriate version of R, 3.1 or later.
 ###Problems Installing?
  - A few things to check:
     + All [prerequisites](#prerequisites]) have been met, such as the right version of R for your platform, and the latest releases of ArcGIS (ArcMap 10.3.1 / Pro 1.1).
-    + Make sure that your user has administrator access, and try running ArcGIS as an Administrator (this step is only required for the initial install).
-    + KB XXX installed
- - Still stuck? [Add an issue and we'll take a look](https://github.com/R-ArcGIS/r-bridge-install/issues). ([More about GitHub Issues)[#TODO])
+    + Make sure that your user has administrator access, and try running ArcGIS as an Administrator:
+     - Start ArcGIS as an administrator, by right clicking the icon, selecting 'Run as Administrator', then trying the script
+     - If that doesn't work, the package directory, "arcgisbinding", that gets installed into the R folder (usually, C:\Users\<username>\Documents\R\win-library\) into the requested place, C:\Program Files (x86)\ArcGIS\Desktop\Rintegration
+ (this step is only required for the initial install).
+    + On Windows 7, [KB2533623](https://support.microsoft.com/en-us/kb/2533623) must be installed.
+ - Still stuck? [Add an issue and we'll take a look](https://github.com/R-ArcGIS/r-bridge-install/issues). ([More about GitHub Issues](https://help.github.com/articles/about-issues/).)
 
 
 Next Steps
