@@ -53,3 +53,11 @@ Want to use tools others have developed?
 
 Want to develop new tools using R?
  - Develop new R-based tools using the R package `arcgisbinding`, which is described in the [bridge repository](https://github.com/R-ArcGIS/r-bridge) and the [package documentation](https://r-arcgis.github.io/assets/arcgisbinding.pdf)
+
+Credits
+-------
+
+This toolbox depends on the R Statistical Computing Software:
+
+> Copyright (C) 2015 The R Foundation for Statistical Computing
+> R is free software and comes with ABSOLUTELY NO WARRANTY.
