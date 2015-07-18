@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import contextlib
+import os
 import shutil
 import sys
 import tempfile
@@ -30,6 +31,7 @@ def versiontuple(v):
         res = tuple(map(int, (v.split("."))))
     return res
 
+
 @contextlib.contextmanager
 def mkdtemp(suffix='', prefix='tmp', parent_dir=None):
     """A contextlib based wrapper for tempfile.mkdtemp."""
@@ -38,3 +40,33 @@ def mkdtemp(suffix='', prefix='tmp', parent_dir=None):
         yield str(path)
     finally:
         shutil.rmtree(path, ignore_errors=True)
+
+
+def set_env_tmpdir(path=None):
+    """Set the system environment value for TMPDIR.
+
+    ArcGIS overrides both TMP and TEMP with its own value on runtime,
+    and when R combines this value with its own name suffix it can
+    create problems.
+
+    Parameters
+    ----------
+    path: str, Path to set for TMPDIR environment variable.
+
+    Returns
+    -------
+    str, resulting value of TMPDIR.
+    """
+    if path is None:
+        # inspect the current value of TMP
+        tmp = os.getenv("TMP")
+        if tmp is None:
+            tmp = os.getenv("TEMP")
+
+        # strip trailing elements, including ArcGIS specific dir
+        path = os.path.split(tmp.strip("\\"))[0]
+
+    if os.path.exists(path):
+        os.putenv("TMPDIR", path)
+
+    return path
