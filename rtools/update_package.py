@@ -42,10 +42,12 @@ def update_package(r_library_path=r_library_path):
         sys.exit()
 
     # TODO also check for the 10.3.1 package version in case of copy-only?
-    if compare_release_versions():
+    if not r_pkg_version():
+        arcpy.AddWarning(
+            "Package is not installed. First use the \"Install R bindings\" script.")
+    elif compare_release_versions():
         arcpy.AddMessage("New release detected! Installing.")
         install_package(overwrite=True, r_library_path=r_library_path)
-
     else:
         arcpy.AddMessage(
             "Installed package is current or newer than version on GitHub.")
