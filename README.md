@@ -3,12 +3,14 @@ Install the R ArcGIS Tools
 
 Install and update the R ArcGIS Bridge with this Python toolbox.
 
+**NOTE**: This release is a beta, and under active development. If you encounter problems, please [create an issue](https://github.com/R-ArcGIS/r-bridge-install/issues) so that we can take a look.
+
 
 Prerequisites
 -------------
 
  - [ArcGIS 10.3.1](http://desktop.arcgis.com/en/desktop/) or [ArcGIS Pro 1.1](http://pro.arcgis.com/en/pro-app/) ([don't have it? try a 60 day trial](http://www.esri.com/software/arcgis/arcgis-for-desktop/free-trial))
- - [R Statistical Computing Software, 3.1.0 or later](http://cran.cnr.berkeley.edu/bin/windows/base/)
+ - [R Statistical Computing Software, 3.1.0 or later](http://cran.cnr.berkeley.edu/bin/windows/base/) ([What is R?](http://www.r-project.org/about.html))
   + 32-bit version required for ArcMap, 64-bit version required for ArcGIS Pro (Note: the installer installs both by default).
   + 64-bit version can be used with ArcMap by installing [Background Geoprocessing](http://desktop.arcgis.com/en/desktop/latest/analyze/executing-tools/64bit-background.htm) and configuring scripts to [run in the background](http://desktop.arcgis.com/en/desktop/latest/analyze/executing-tools/foreground-and-background-processing.htm).
 
@@ -32,6 +34,8 @@ First, make sure you've installed an appropriate version of R, 3.1 or later.
 ![](https://github.com/R-ArcGIS/r-bridge-install/blob/master/img/r-bridge-install-pro.png)
 
   - Run the `Install R bindings` script. You can then test that the bridge is able to see your R installation by running the `Print R Version` and `R Installation Details` tools, and running the included [sample tools](https://github.com/R-ArcGIS/r-bridge/tree/master/package/arc/inst/examples).
+
+If everything worked, you should be ready to start! See [Next Steps](#next-steps) for where to go from here. Remember, you can update the package at any time by running the 'Update R bindings' script.
 
 ###Problems Installing?
  - A few things to check:
@@ -61,7 +65,8 @@ This toolbox depends on the R Statistical Computing Software:
 
 > Copyright (C) 2015 The R Foundation for Statistical Computing
 > R is free software and comes with ABSOLUTELY NO WARRANTY.
+> See the [COPYRIGHTS file](https://github.com/wch/r-source/blob/trunk/doc/COPYRIGHTS) for details.
 
-This toolsobx depends on [`ntfsutils`](https://github.com/sid0/ntfs):
+This toolbox depends on [`ntfsutils`](https://github.com/sid0/ntfs):
 > (c) 2012 the Mozilla Foundation and others, licensed under the
 > Simplified BSD License. See the [LICENSE file](https://github.com/sid0/ntfs/blob/master/LICENSE) for details.
