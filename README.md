@@ -40,7 +40,7 @@ First, make sure you've installed an appropriate version of R, 3.1 or later.
      - Start ArcGIS as an administrator, by right clicking the icon, selecting 'Run as Administrator', then trying the script
      - If that doesn't work, the package directory, "arcgisbinding", that gets installed into the R folder (usually, C:\Users\<username>\Documents\R\win-library\) into the requested place, C:\Program Files (x86)\ArcGIS\Desktop\Rintegration
  (this step is only required for the initial install).
-    + On Windows 7, [KB2533623](https://support.microsoft.com/en-us/kb/2533623) must be installed.
+    + On Windows 7, [KB2533623](https://support.microsoft.com/en-us/kb/2533623) must be installed. WIthout this hotfix, the library will generate the error "The procedure entry point AddDllDirectory could be located in the dynamic link library KERNEL32.dll".
  - Still stuck? [Add an issue and we'll take a look](https://github.com/R-ArcGIS/r-bridge-install/issues). ([More about GitHub Issues](https://help.github.com/articles/about-issues/).)
 
 
