@@ -65,8 +65,8 @@ This toolbox depends on the R Statistical Computing Software:
 
 > Copyright (C) 2015 The R Foundation for Statistical Computing
 > R is free software and comes with ABSOLUTELY NO WARRANTY.
-> See the [COPYRIGHTS file](https://github.com/wch/r-source/blob/trunk/doc/COPYRIGHTS) for details.
+> See the [COPYRIGHTS](https://github.com/wch/r-source/blob/trunk/doc/COPYRIGHTS) file for details.
 
 This toolbox depends on [`ntfsutils`](https://github.com/sid0/ntfs):
 > (c) 2012 the Mozilla Foundation and others, licensed under the
-> Simplified BSD License. See the [LICENSE file](https://github.com/sid0/ntfs/blob/master/LICENSE) for details.
+> Simplified BSD License. See the [LICENSE](https://github.com/sid0/ntfs/blob/master/LICENSE) file for details.
