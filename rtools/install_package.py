@@ -82,9 +82,6 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         # NOTE: r_package_path currently looks for the registry key for Pro,
         #       will this be an issue?
 
-        # TODO port rest of the post_install_10.3.1.bat file
-        #      so that this all works automatically.
-
         r_integration_dir = os.path.join(install_dir, "Rintegration")
         link_dir = os.path.join(r_integration_dir, PACKAGE_NAME)
 

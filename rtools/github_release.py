@@ -16,7 +16,6 @@ API_URL = "https://api.github.com"
 org = 'R-ArcGIS'
 project = 'r-bridge'
 
-# TODO use actual API instead of stub
 latest_url = '{API_URL}/repos/{org}/{project}/releases/latest'.format(
              API_URL=API_URL, org=org, project=project)
 
