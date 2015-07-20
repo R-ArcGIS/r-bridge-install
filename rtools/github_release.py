@@ -13,22 +13,26 @@ except ImportError:
 from .utils import versiontuple
 
 API_URL = "https://api.github.com"
+org = 'R-ArcGIS'
+project = 'r-bridge'
 
 # TODO use actual API instead of stub
-# latest_url = '{API_URL}/repos/{org}/{project}/releases/latest'.format(
-#            API_URL=API_URL, org=org, project=project)
-latest_url = "https://4326.us/R/latest.json"
+latest_url = '{API_URL}/repos/{org}/{project}/releases/latest'.format(
+             API_URL=API_URL, org=org, project=project)
 
 
 def save_url(url, output_path):
     """Save a URL to disk."""
+    valid_types = ['application/zip', 'application/octet-stream']
     r = request.urlopen(url)
-    if r.headers['content-type'] == 'application/zip' and r.code == 200:
+    if r.headers['content-type'] in valid_types and r.code == 200:
         arcpy.AddMessage("Saving URL to '{}'".format(output_path))
         with open(output_path, 'wb') as f:
             f.write(r.read())
     else:
         arcpy.AddError("Failed to download '{}', invalid content.".format(url))
+        arcpy.AddError("Content type: {}, response code: {}".format(
+            r.headers['content-type'], r.code))
 
 
 def parse_json_url(url):
