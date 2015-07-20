@@ -11,7 +11,7 @@ import sys
 
 from .bootstrap_r import execute_r
 from .github_release import save_url, release_info
-from .rpath import r_library_path, r_pkg_path, r_pkg_version
+from .rpath import r_library_path, r_pkg_path, r_pkg_version, arcmap_exists
 from .utils import mkdtemp, set_env_tmpdir
 from .fs import getvolumeinfo, hardlinks_supported, junctions_supported
 
@@ -36,6 +36,8 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     install_dir = info['InstallDir']
     arc_version = info['Version']
     product = info['ProductName']
+    arcmap_needs_link = False
+
     # earlier versions excluded by virtue of not having Python toolbox support
     no_hook_versions = ('10.1', '10.2', '10.2.1', '10.2.2', '10.3.0')
     if arc_version in no_hook_versions and product is not 'ArcGISPro':
@@ -45,6 +47,12 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     if arc_version in ('1.0', '1.0.2') and product == 'ArcGISPro':
         arcpy.AddError("The ArcGIS R bridge requires ArcGIS Pro 1.1 or later.")
         sys.exit()
+
+    if product == 'ArcGISPro':
+        # detect if we we have a 10.3.1 install that needs linking
+        if arcmap_exists("10.3"):
+            arcmap_needs_link = True
+            arcpy.AddMessage("Pro side by side with 10.3 detected.")
 
     # set an R-compatible temporary folder, if needed.
     orig_tmpdir = os.getenv("TMPDIR")
@@ -76,9 +84,10 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     # TODO: still do this if installing to Pro, but 10.3.1 is installed, check
     #       registry to find it in this case.
 
+
     # at 10.3.1, we _must_ have the bridge installed at the correct location.
     # create a symlink that connects back to the correct location on disk.
-    if arc_version == '10.3.1' and product == 'Desktop':
+    if arc_version == '10.3.1' and product == 'Desktop' or arcmap_needs_link:
         # NOTE: r_package_path currently looks for the registry key for Pro,
         #       will this be an issue?
 
@@ -114,6 +123,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             kdll = ctypes.windll.LoadLibrary("kernel32.dll")
             kdll.CreateSymbolicLinkW(link_dir, r_package_path, 1)
         else:
+            # working on a non-NTFS volume, copy instead
             vol_info = getvolumeinfo(link_dir)
             arcpy.AddMessage("{} Drive type: {}. Copying package files.".format(
                 detect_msg, vol_info[0]))
