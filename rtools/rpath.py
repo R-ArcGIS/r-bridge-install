@@ -258,3 +258,29 @@ def r_lib_path():
     return lib_path
 
 r_library_path = r_lib_path()
+
+def arcmap_exists(version=None):
+    root_key = winreg.HKEY_CURRENT_USER
+    reg_path = "SOFTWARE\Esri"
+    if not version:
+        package_key = "Desktop10.3"
+    else:
+        package_key = "Desktop{}".format(version)
+
+    arcmap_reg = None
+    installed = False
+    try:
+        # find the key, 64- or 32-bit we want it all
+        arcmap_reg = winreg.OpenKey(
+            root_key, reg_path, 0,
+            (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+    except fnf_exception as error:
+        if error.errno == errno.ENOENT:
+            pass
+        else:
+            raise
+
+    if arcmap_reg:
+        installed = True
+
+    return arcmap_reg
