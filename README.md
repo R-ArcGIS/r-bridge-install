@@ -69,3 +69,6 @@ This toolbox depends on the R Statistical Computing Software:
 This toolbox depends on [`ntfsutils`](https://github.com/sid0/ntfs):
 > (c) 2012 the Mozilla Foundation and others, licensed under the
 > Simplified BSD License. See the [LICENSE](https://github.com/sid0/ntfs/blob/master/LICENSE) file for details.
+
+## License
+[Apache 2.0](LICENSE)
