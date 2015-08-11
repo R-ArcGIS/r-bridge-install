@@ -23,7 +23,12 @@ latest_url = '{API_URL}/repos/{org}/{project}/releases/latest'.format(
 def save_url(url, output_path):
     """Save a URL to disk."""
     valid_types = ['application/zip', 'application/octet-stream']
-    r = request.urlopen(url)
+    try:
+        r = request.urlopen(url)
+    except request.HTTPError as e:
+        arcpy.AddError("Failed to download '{}', {}.".format(url, e))
+        sys.exit()
+
     if r.headers['content-type'] in valid_types and r.code == 200:
         arcpy.AddMessage("Saving URL to '{}'".format(output_path))
         with open(output_path, 'wb') as f:
