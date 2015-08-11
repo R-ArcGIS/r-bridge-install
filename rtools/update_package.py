@@ -50,8 +50,9 @@ def update_package(r_library_path=r_library_path):
             arcpy.AddMessage("New release detected! Installing.")
             install_package(overwrite=True, r_library_path=r_library_path)
         else:
-            arcpy.AddMessage(
-                "Installed package is current or newer than version on GitHub.")
+            msg = "The installed ArcGIS R package (version " + \
+                  "{}) is the current version on GitHub.".format(r_pkg_version())
+            arcpy.AddMessage(msg)
 
 # execute as standalone script, get parameters from sys.argv
 if __name__ == '__main__':
