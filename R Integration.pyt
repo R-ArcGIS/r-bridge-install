@@ -8,11 +8,6 @@ import arcpy
 import rtools
 from rtools.utils import dedent
 
-# TODO replace with GitHub
-INSTALL_BASE = "https://4326.us/R/bin/windows/contrib/3.2"
-INSTALL_ZIP = "arcgisbinding_1.0.0.111.zip"
-INSTALL_URL = "{}/{}".format(INSTALL_BASE, INSTALL_ZIP)
-
 
 class Toolbox(object):
     def __init__(self):
@@ -33,16 +28,6 @@ class UpdateBindings(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        """
-        # install url
-        param_1 = arcpy.Parameter()
-        param_1.name = 'installation_url'
-        param_1.displayName = 'Installation URL'
-        param_1.parameterType = 'Required'
-        param_1.direction = 'Input'
-        param_1.datatype = 'String'
-        param_1.value = INSTALL_URL
-        """
         return []
 
     def isLicensed(self):
