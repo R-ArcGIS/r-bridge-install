@@ -62,7 +62,7 @@ def execute_r(command='Rcmd', *args):
 
 def path_exists(path):
     valid = False
-    if os.path.exists(path):
+    if path and os.path.exists(path):
         valid = True
     return valid
 
