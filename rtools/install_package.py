@@ -48,11 +48,12 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         arcpy.AddError("The ArcGIS R bridge requires ArcGIS Pro 1.1 or later.")
         sys.exit()
 
-    if product == 'ArcGISPro':
-        # detect if we we have a 10.3.1 install that needs linking
-        if arcmap_exists("10.3"):
-            arcmap_needs_link = True
-            arcpy.AddMessage("Pro side by side with 10.3 detected.")
+    # detect if we we have a 10.3.1 install that needs linking
+    if product == 'ArcGISPro' and arcmap_exists("10.3"):
+        arcmap_needs_link = True
+        msg = "Pro side by side with 10.3 detected, installing bridge " + \
+              "for both environments."
+        arcpy.AddMessage(msg)
 
     # set an R-compatible temporary folder, if needed.
     orig_tmpdir = os.getenv("TMPDIR")
