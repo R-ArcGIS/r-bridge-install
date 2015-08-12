@@ -21,8 +21,7 @@ PACKAGE_VERSION = r_pkg_version()
 
 def install_package(overwrite=False, r_library_path=r_library_path):
     """Install ArcGIS R bindings onto this machine."""
-    # pull back stringified bool
-    if overwrite == 'true' or overwrite is True:
+    if overwrite is True:
         overwrite = True
     else:
         overwrite = False

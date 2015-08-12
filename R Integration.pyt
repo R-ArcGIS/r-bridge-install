@@ -159,4 +159,4 @@ class InstallBindings(object):
             return validator(parameters).updateMessages()
 
     def execute(self, parameters, messages):
-        rtools.install_package(overwrite=parameters[0].valueAsText)
+        rtools.install_package(overwrite=parameters[0].value)
