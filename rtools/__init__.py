@@ -1,3 +1,6 @@
+
+from .config import *
+
 from .rpath import (
     r_install_path,
     r_version_info,

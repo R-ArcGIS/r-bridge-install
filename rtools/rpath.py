@@ -3,10 +3,11 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from contextlib import contextmanager
-import os
+import ctypes.wintypes
 import datetime
 import errno
-import ctypes.wintypes
+import logging
+import os
 
 try:
     import winreg
@@ -28,6 +29,8 @@ def ignored(*exceptions):
 fnf_exception = getattr(__builtins__,
                         'FileNotFoundError', WindowsError)
 
+log = logging.getLogger(__name__)
+
 
 def r_path():
     """Find R installation path from registry."""
@@ -47,25 +50,34 @@ def r_path():
             r_reg = None
 
             try:
+                log.info("OpenKey on {}, with READ + WOW64\n".format(
+                    r_path))
                 r_reg = winreg.OpenKey(root_key, r_path,
                                        0, (winreg.KEY_READ |
                                            winreg.KEY_WOW64_64KEY))
             except fnf_exception as error:
+                log.debug("Exception generated: {}".format(error))
                 if error.errno == errno.ENOENT:
                     pass
                 else:
                     raise
 
             if r_reg:
+                log.info("Successfully found {}".format(r_path))
+
                 try:
+                    log.info("Looking for InstallPath.")
                     r_install_path = winreg.QueryValueEx(r_reg, "InstallPath")[0]
                 except fnf_exception as error:
+                    log.debug("Exception generated: {}".format(error))
                     if error.errno == errno.ENOENT:
                         pass
                     else:
                         raise
 
                 if not r_install_path:
+                    log.debug("Top-level install path not defined. " +
+                              "Checking version-specific locations.")
                     """Can't find the install path as a top-level value.
                     Inspect the children keys for versions, and use the most
                     recently installed one as the correct R installation."""
@@ -74,6 +86,7 @@ def r_path():
                     for pos in range(10):
                         # TODO ensure this is robust to errors
                         with ignored(WindowsError):
+                            log.info("checking EnumKey pos {}".format(pos))
                             r_base_key = winreg.EnumKey(r_reg, pos)
 
                             # test for the right path based on age
@@ -91,6 +104,7 @@ def r_path():
                                     microseconds=r_version_info[2]/10)
                                 if max_time < r_install_time:
                                     max_time = r_install_time
+    log.info("Final R install path: {}".format(r_install_path))
     return r_install_path
 
 r_install_path = r_path()
