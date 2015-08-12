@@ -43,7 +43,10 @@ def r_path():
         'HKCU': winreg.HKEY_CURRENT_USER,
         'HKLM': winreg.HKEY_LOCAL_MACHINE
     }
-    r_reg_paths = ["SOFTWARE\\R-core\\R",  "SOFTWARE\\R-core\\R64"]
+    r_reg_paths = ["SOFTWARE\\R-core\\R",
+                   "SOFTWARE\\R-core\\R64",
+                   "SOFTWARE\\Wow6432Node\\R-Core\\R",
+                   "SOFTWARE\\Wow6432Node\\R-Core\\R64"]
 
     for (key_name, root_key) in list(root_keys.items()):
         for r_path in r_reg_paths:
@@ -53,8 +56,8 @@ def r_path():
                 log.info("OpenKey on {}, with READ + WOW64\n".format(
                     r_path))
                 r_reg = winreg.OpenKey(root_key, r_path,
-                                       0, (winreg.KEY_READ |
-                                           winreg.KEY_WOW64_64KEY))
+                                       0, (winreg.KEY_WOW64_64KEY +
+                                           winreg.KEY_READ))
             except fnf_exception as error:
                 log.debug("Exception generated: {}".format(error))
                 if error.errno == errno.ENOENT:
