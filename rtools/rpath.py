@@ -276,14 +276,16 @@ def r_lib_path():
 
 r_library_path = r_lib_path()
 
+
 def arcmap_exists(version=None):
     root_key = winreg.HKEY_CURRENT_USER
-    reg_path = "SOFTWARE\Esri"
+    reg_base = "SOFTWARE\\Esri"
     if not version:
         package_key = "Desktop10.3"
     else:
         package_key = "Desktop{}".format(version)
 
+    reg_path = "{}\\{}".format(reg_base, package_key)
     arcmap_reg = None
     installed = False
     try:
@@ -300,4 +302,4 @@ def arcmap_exists(version=None):
     if arcmap_reg:
         installed = True
 
-    return arcmap_reg
+    return installed
