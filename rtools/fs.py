@@ -24,8 +24,8 @@
 # From the NTFS project: https://github.com/sid0/ntfs
 
 import ctypes
-from ctypes import POINTER, WinError, sizeof, byref
-from ctypes.wintypes import DWORD, HANDLE, BOOL
+from ctypes import POINTER, WinError, byref
+from ctypes.wintypes import DWORD, BOOL
 
 LPDWORD = POINTER(DWORD)
 

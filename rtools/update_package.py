@@ -4,10 +4,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import arcpy
-import os
 import sys
 
-from .bootstrap_r import execute_r
 from .github_release import release_info
 from .install_package import install_package
 from .rpath import r_library_path, r_pkg_version
@@ -29,7 +27,6 @@ def update_package(r_library_path=r_library_path):
     # TODO make sure that the package isn't loaded before updating?
 
     info = arcpy.GetInstallInfo()
-    install_dir = info['InstallDir']
     arc_version = info['Version']
     product = info['ProductName']
 
