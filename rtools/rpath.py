@@ -281,9 +281,8 @@ def arcmap_exists(version=None):
     root_key = winreg.HKEY_CURRENT_USER
     reg_base = "SOFTWARE\\Esri"
     if not version:
-        package_key = "Desktop10.3"
-    else:
-        package_key = "Desktop{}".format(version)
+        version = "10.3"
+    package_key = "Desktop{}".format(version)
 
     reg_path = "{}\\{}".format(reg_base, package_key)
     arcmap_reg = None
