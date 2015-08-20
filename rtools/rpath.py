@@ -302,3 +302,49 @@ def arcmap_exists(version=None):
         installed = True
 
     return installed
+
+
+def arcmap_path(version=None):
+    """Path to ArcGIS Installation."""
+
+    arcmap_path = None
+
+    if not version:
+        version = "10.3"
+    package_key = "Desktop{}".format(version)
+
+    root_key = winreg.HKEY_LOCAL_MACHINE
+    arc_reg_paths = [
+        "SOFTWARE\\ESRI\\{}".format(package_key),
+        "SOFTWARE\\Wow6432Node\\ESRI\\{}".format(package_key)
+    ]
+
+    arcmap_reg = None
+    for reg_path in arc_reg_paths:
+        try:
+            # find the key, 64- or 32-bit we want it all
+            arcmap_reg = winreg.OpenKey(
+                root_key, reg_path, 0,
+                (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+        except fnf_exception as error:
+            if error.errno == errno.ENOENT:
+                pass
+            else:
+                raise
+
+        if arcmap_reg:
+            try:
+                # returns a tuple of (value, type)
+                arcmap_path_key = winreg.QueryValueEx(arcmap_reg, "InstallDir")
+                arcmap_path_raw = arcmap_path_key[0]
+                if os.path.exists(arcmap_path_raw):
+                    arcmap_path = arcmap_path_raw.strip('\\')
+            except fnf_exception as error:
+                if error.errno == errno.ENOENT:
+                    pass
+                else:
+                    raise
+
+    return arcmap_path
+
+arcmap_install_path = arcmap_path()
