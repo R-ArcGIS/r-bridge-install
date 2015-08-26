@@ -11,7 +11,13 @@ import sys
 
 from .bootstrap_r import execute_r
 from .github_release import save_url, release_info
-from .rpath import r_library_path, r_pkg_path, r_pkg_version, arcmap_exists
+from .rpath import (
+    r_library_path,
+    r_pkg_path,
+    r_pkg_version,
+    arcmap_exists,
+    arcmap_install_path,
+)
 from .utils import mkdtemp, set_env_tmpdir
 from .fs import getvolumeinfo, hardlinks_supported, junctions_supported
 
@@ -50,14 +56,19 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     # detect if we we have a 10.3.1 install that needs linking
     if product == 'ArcGISPro' and arcmap_exists("10.3"):
         arcmap_needs_link = True
-        msg = "Pro side by side with 10.3 detected, installing bridge " + \
-              "for both environments."
-        arcpy.AddMessage(msg)
+        msg_base = "Pro side by side with 10.3 detected,"
+        if arcmap_install_path is not None:
+            msg = "{} installing bridge for both environments.".format(msg_base)
+            arcpy.AddMessage(msg)
+        else:
+            msg = "{} but unable to find install path. ArcGIS bridge " + \
+                  "must be manually installed in ArcGIS 10.3.".format(msg_base)
+            arcpy.AddWarning(msg)
 
     # set an R-compatible temporary folder, if needed.
     orig_tmpdir = os.getenv("TMPDIR")
     if not orig_tmpdir:
-        env_tmpdir = set_env_tmpdir()
+        set_env_tmpdir()
 
     download_url = release_info()[0]
     if download_url is None:
@@ -108,8 +119,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         r_package_path = r_pkg_path()
 
         if r_package_path:
-            arcpy.AddMessage("Detected package path: {}.".format(
-                r_package_path))
+            arcpy.AddMessage("R package path: {}.".format(r_package_path))
         else:
             arcpy.AddError("Unable to locate R package library. Link failed.")
             sys.exit()
