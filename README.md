@@ -20,7 +20,7 @@ How to Run
 First, make sure you've installed an appropriate version of R, 3.1 or later. 
 
 ###ArcGIS 10.3.1
- - In the [Catalog window](http://desktop.arcgis.com/en/desktop/latest/map/working-with-arcmap/what-is-the-catalog-window-.htm), nagivate to the folder containing the Python Toolbox, `R Integration.pyt`. _Note_: You may have to first add a folder connection to the location that you extracted the files or downloaded via Git.
+ - In the [Catalog window](http://desktop.arcgis.com/en/desktop/latest/map/working-with-arcmap/what-is-the-catalog-window-.htm), navigate to the folder containing the Python Toolbox, `R Integration.pyt`. _Note_: You may have to first add a folder connection to the location that you extracted the files or downloaded via Git.
  - Open the toolbox, which should look like this:
 
 ![](https://github.com/R-ArcGIS/r-bridge-install/blob/master/img/r-bridge-install-arcmap.png)
@@ -43,7 +43,7 @@ If everything worked, you should be ready to start! See [Next Steps](#next-steps
     + Make sure that your user has administrator access, and try running ArcGIS as an Administrator:
      - Start ArcGIS as an administrator, by right clicking the icon, selecting 'Run as Administrator', then trying the script
      - If that doesn't work, the package directory, "arcgisbinding", that gets installed into the R folder (usually, C:\Users\<username>\Documents\R\win-library\) into the requested place, C:\Program Files (x86)\ArcGIS\Desktop\Rintegration
-    + On Windows 7, [KB2533623](https://support.microsoft.com/en-us/kb/2533623) must be installed. WIthout this hotfix, the library will generate the error "The procedure entry point AddDllDirectory could be located".
+    + On Windows 7, [KB2533623](https://support.microsoft.com/en-us/kb/2533623) must be installed. Without this hotfix, the library will generate the error "The procedure entry point AddDllDirectory could be located".
  - Still stuck? [Add an issue and we'll take a look](https://github.com/R-ArcGIS/r-bridge-install/issues). ([More about GitHub Issues](https://help.github.com/articles/about-issues/))
 
 
