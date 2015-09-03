@@ -140,7 +140,7 @@ class InstallBindings(object):
         param_1.displayName = 'Overwrite Existing Installation?'
         param_1.parameterType = 'Required'
         param_1.direction = 'Input'
-        param_1.datatype = 'Boolean'
+        param_1.datatype = 'GPBoolean'
         param_1.value = False
 
         return [param_1]
