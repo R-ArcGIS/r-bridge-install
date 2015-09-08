@@ -45,16 +45,11 @@ def execute_r(command='Rcmd', *args):
                     arcpy.AddMessage(stdout_msg)
                 stderr_msg = process.stderr.readline().strip()
                 if stderr_msg:
+                    # highlight standard error as warnings
                     arcpy.AddWarning(stderr_msg)
 
             if process.returncode == 0:
                 pass
-                """
-                res_msg = "Script succeeded."
-                if success_message:
-                    res_msg += "\n" + success_message
-                arcpy.AddMessage(res_msg)
-                """
             else:
                 arcpy.AddWarning("R command returned non-zero exit status.")
             return process.returncode

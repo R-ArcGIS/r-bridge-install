@@ -4,13 +4,10 @@ from __future__ import print_function
 import arcpy
 import json
 import sys
-import textwrap
 try:
     import urllib.request as request
 except ImportError:
     import urllib2 as request
-
-from .utils import versiontuple
 
 API_URL = "https://api.github.com"
 org = 'R-ArcGIS'

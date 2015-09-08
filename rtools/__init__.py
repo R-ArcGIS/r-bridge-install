@@ -1,4 +1,8 @@
+
+from .config import *
+
 from .rpath import (
+    arcmap_install_path,
     r_install_path,
     r_version_info,
     r_package_path,
