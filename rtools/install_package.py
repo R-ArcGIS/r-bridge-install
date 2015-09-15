@@ -65,6 +65,26 @@ def install_package(overwrite=False, r_library_path=r_library_path):
                   "must be manually installed in ArcGIS 10.3.".format(msg_base)
             arcpy.AddWarning(msg)
 
+    # if we're going to install the bridge in 10.3.1, create the appropriate
+    # directory before trying to install.
+    r_integration_dir = os.path.join(install_dir, "Rintegration")
+    if arc_version == '10.3.1' and product == 'Desktop' or arcmap_needs_link:
+        # TODO escalate privs here? test on non-admin user
+        if not os.path.exists(r_integration_dir):
+            try:
+                write_test = os.path.join(install_dir, 'test.txt')
+                with open(write_test, 'w') as f:
+                    f.write('test')
+                os.remove(write_test)
+                os.makedirs(r_integration_dir)
+            except IOError:
+                arcpy.AddError(
+                    "Insufficient privileges to create 10.3.1 bridge directory."
+                    " Please start ArcMap as an administrator, by right clicking"
+                    " the icon, selecting \"Run as Administrator\", then run this"
+                    " script again.")
+                sys.exit()
+
     # set an R-compatible temporary folder, if needed.
     orig_tmpdir = os.getenv("TMPDIR")
     if not orig_tmpdir:
@@ -92,21 +112,10 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     # return TMPDIR to its original value; only need it for Rcmd INSTALL
     set_env_tmpdir(orig_tmpdir)
 
-    # TODO: still do this if installing to Pro, but 10.3.1 is installed, check
-    #       registry to find it in this case.
-
     # at 10.3.1, we _must_ have the bridge installed at the correct location.
     # create a symlink that connects back to the correct location on disk.
     if arc_version == '10.3.1' and product == 'Desktop' or arcmap_needs_link:
-        # NOTE: r_package_path currently looks for the registry key for Pro,
-        #       will this be an issue?
-
-        r_integration_dir = os.path.join(install_dir, "Rintegration")
         link_dir = os.path.join(r_integration_dir, PACKAGE_NAME)
-
-        # TODO escalate privs here? test on non-admin user
-        if not os.path.exists(r_integration_dir):
-            os.makedirs(r_integration_dir)
 
         if os.path.exists(link_dir):
             if junctions_supported(link_dir) or hardlinks_supported(link_dir):
