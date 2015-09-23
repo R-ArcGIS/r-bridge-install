@@ -4,7 +4,15 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import arcpy
-import ctypes
+try:
+    import ctypes
+except ImportError:
+    msg = "Unable to connect to your Windows configuration, " + \
+          "this is likely due to an incorrect Python installation. " + \
+          "Try repairing your ArcGIS installation."
+    arcpy.AddError(msg)
+    sys.exit()
+
 import os
 import shutil
 import sys
