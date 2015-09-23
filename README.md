@@ -15,6 +15,9 @@ Prerequisites
   + 64-bit version can be used with ArcMap by installing [Background Geoprocessing](http://desktop.arcgis.com/en/desktop/latest/analyze/executing-tools/64bit-background.htm) and configuring scripts to [run in the background](http://desktop.arcgis.com/en/desktop/latest/analyze/executing-tools/foreground-and-background-processing.htm).
  - A connection to the internet
 
+![](https://github.com/R-ArcGIS/r-bridge-install/blob/master/img/version-block-detailed.png)
+
+
 How to Run
 ----------
 

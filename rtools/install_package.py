@@ -4,7 +4,15 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import arcpy
-import ctypes
+try:
+    import ctypes
+except ImportError:
+    msg = "Unable to connect to your Windows configuration, " + \
+          "this is likely due to an incorrect Python installation. " + \
+          "Try repairing your ArcGIS installation."
+    arcpy.AddError(msg)
+    sys.exit()
+
 import os
 import shutil
 import sys
@@ -44,7 +52,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     arcmap_needs_link = False
 
     # earlier versions excluded by virtue of not having Python toolbox support
-    no_hook_versions = ('10.1', '10.2', '10.2.1', '10.2.2', '10.3.0')
+    no_hook_versions = ('10.1', '10.2', '10.2.1', '10.2.2', '10.3')
     if arc_version in no_hook_versions and product is not 'ArcGISPro':
         arcpy.AddError("The ArcGIS R bridge requires ArcGIS 10.3.1 or later.")
         sys.exit()
