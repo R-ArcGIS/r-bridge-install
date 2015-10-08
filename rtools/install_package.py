@@ -97,7 +97,6 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         sys.exit()
 
     # we have a release, write it to disk for installation
-    arcpy.AddMessage(download_url)
     with mkdtemp() as temp_dir:
         zip_name = os.path.basename(download_url)
         package_path = os.path.join(temp_dir, zip_name)
