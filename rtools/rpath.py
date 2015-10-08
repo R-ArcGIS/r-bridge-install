@@ -31,6 +31,32 @@ fnf_exception = getattr(__builtins__,
 
 log = logging.getLogger(__name__)
 
+# cyptes constants
+CSIDL_PROFILE = 40
+SHGFP_TYPE_CURRENT = 0
+
+
+def _documents_folder():
+    """ Get the users' documents folder, which is where R will place
+        its default user-specific 'personal' library.
+
+        Returns: full path of user library."""
+
+    # first, check if the user has an R_USER variable initialized.
+    documents_folder = _environ_path("R_USER")
+
+    if not documents_folder:
+        # Call SHGetFolderPath using ctypes.
+        ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        ctypes.windll.shell32.SHGetFolderPathW(
+            0, CSIDL_PROFILE, 0, SHGFP_TYPE_CURRENT, ctypes_buffer)
+        # NOTE this isn't a language-independent way, but CSIDL_PERSONAL gets
+        #      the wrong path. Test in non-English locales.
+        documents_folder = os.path.join(ctypes_buffer.value, "Documents")
+
+    return documents_folder
+
+
 
 def r_path():
     """Find R installation path from registry."""
@@ -166,27 +192,10 @@ def r_pkg_path():
 
     # user's R library in Documents/R/win-library/R-x.x/
     if not package_path and r_version_info is not None:
-        # This doesn't automatically work, R_USER, R_LIBS_USER can both override
-        # the default location. On my machine, it does't work as it gets the
-        # selected location of the Documents library, not the default My Documents
-        # path.
-
-        # Call SHGetFolderPath using ctypes.
-        CSIDL_PROFILE = 40
-        SHGFP_TYPE_CURRENT = 0
-
-        ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
-        ctypes.windll.shell32.SHGetFolderPathW(
-            0, CSIDL_PROFILE, 0, SHGFP_TYPE_CURRENT, ctypes_buffer)
-        # NOTE this isn't a language-independent way, but CSIDL_PERSONAL gets
-        #      the wrong path.
-        documents_folder = os.path.join(ctypes_buffer.value, "Documents")
-
-        # check with R -- what is R_LIBS_USER set to?
         (r_major, r_minor, r_patch) = r_version_info.split(".")
 
         r_library_package_path = os.path.join(
-            documents_folder, "R", "win-library",
+            _documents_folder(), "R", "win-library",
             "{}.{}".format(r_major, r_minor), package_name)
         if os.path.exists(r_library_package_path):
             package_path = r_library_package_path
@@ -244,25 +253,7 @@ def r_lib_path():
         # selected location of the Documents library, not the default My Documents
         # path.
 
-        # Call SHGetFolderPath using ctypes.
-        CSIDL_PROFILE = 40
-        SHGFP_TYPE_CURRENT = 0
 
-        ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
-        ctypes.windll.shell32.SHGetFolderPathW(
-            0, CSIDL_PROFILE, 0, SHGFP_TYPE_CURRENT, ctypes_buffer)
-        # NOTE this isn't a language-independent way, but CSIDL_PERSONAL gets
-        #      the wrong path.
-        documents_folder = os.path.join(ctypes_buffer.value, "Documents")
-
-        # check with R -- what is R_LIBS_USER set to?
-        (r_major, r_minor, r_patch) = r_version_info.split(".")
-
-        r_user_library_path = os.path.join(
-            documents_folder, "R", "win-library",
-            "{}.{}".format(r_major, r_minor))
-        if os.path.exists(r_user_library_path):
-            lib_path = r_user_library_path
 
     # R library in ProgramFiles/R-x.xx/library
     if not lib_path and r_install_path is not None:
