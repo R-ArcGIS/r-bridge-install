@@ -57,6 +57,16 @@ def _documents_folder():
     return documents_folder
 
 
+def _environ_path(var=None):
+    """ Check if an environment variable is an existing path."""
+    path = None
+    if var and var in os.environ:
+        var_path = os.environ[var]
+        if os.path.exists(var_path):
+            path = var_path
+
+    return path
+
 
 def r_path():
     """Find R installation path from registry."""
@@ -149,6 +159,23 @@ def r_version():
 r_version_info = r_version()
 
 
+def _r_user_library_path():
+    # check R_LIBS_USER first
+    lib_path = _environ_path("R_LIBS_USER")
+
+    # user's R library in Documents/R/win-library/R-x.x/
+    if not lib_path:
+        (r_major, r_minor, r_patch) = r_version_info.split(".")
+
+        r_user_library_path = os.path.join(
+            _documents_folder(), "R", "win-library",
+            "{}.{}".format(r_major, r_minor))
+        if os.path.exists(r_user_library_path):
+            lib_path = r_user_library_path
+
+    return lib_path
+
+
 def r_pkg_path():
     """
     Package path search. Locations searched:
@@ -189,6 +216,11 @@ def r_pkg_path():
                 pass
             else:
                 raise
+
+    # try the user-environment variables before other locations,
+    # R_LIBS_USER, R_LIBS can all override the default location
+    # check R_LIBS_USER first, and R standard location
+    lib_path = _r_user_library_path()
 
     # user's R library in Documents/R/win-library/R-x.x/
     if not package_path and r_version_info is not None:
@@ -253,7 +285,13 @@ def r_lib_path():
         # selected location of the Documents library, not the default My Documents
         # path.
 
+    # check R_LIBS_USER or R designated default
+    lib_path = _r_user_library_path()
 
+    # Next, check the value of R_LIBS -- users may set this
+    # instead of the (more specific) R_LIBS_USER
+    if not lib_path:
+        lib_path = _environ_path("R_LIBS")
 
     # R library in ProgramFiles/R-x.xx/library
     if not lib_path and r_install_path is not None:
