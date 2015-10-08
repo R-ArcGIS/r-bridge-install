@@ -50,8 +50,9 @@ def _documents_folder():
         ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
         ctypes.windll.shell32.SHGetFolderPathW(
             0, CSIDL_PROFILE, 0, SHGFP_TYPE_CURRENT, ctypes_buffer)
-        # NOTE this isn't a language-independent way, but CSIDL_PERSONAL gets
-        #      the wrong path. Test in non-English locales.
+        # This isn't a language-independent way, but CSIDL_PERSONAL gets
+        # the wrong path.
+        # TODO: Test in non-English locales.
         documents_folder = os.path.join(ctypes_buffer.value, "Documents")
 
     return documents_folder
@@ -138,7 +139,8 @@ def r_path():
                                      winreg.KEY_WOW64_64KEY))
                                 r_install_path = winreg.QueryValueEx(
                                     r_version_reg, "InstallPath")[0]
-                                r_version_info = winreg.QueryInfoKey(r_version_reg)
+                                r_version_info = winreg.QueryInfoKey(
+                                    r_version_reg)
                                 r_install_time = epoch + datetime.timedelta(
                                     microseconds=r_version_info[2]/10)
                                 if max_time < r_install_time:
@@ -180,7 +182,7 @@ def r_pkg_path():
     """
     Package path search. Locations searched:
      - HKCU\\Software\\Esri\\ArcGISPro\\RintegrationProPackagePath
-     - [USERDOCUMENT]/R/win-library/[3-9].[0-9]/ - default for user R packages
+     - [MYDOCUMENTS]/R/win-library/[3-9].[0-9]/ - default for user R packages
      - [ArcGIS]/Resources/Rintegration/arcgisbinding
     """
     # NOTE to be 100% robust, this may be better implemented as a call to
