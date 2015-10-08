@@ -118,9 +118,9 @@ def r_path():
                 if not r_install_path:
                     log.debug("Top-level install path not defined. " +
                               "Checking version-specific locations.")
-                    """Can't find the install path as a top-level value.
-                    Inspect the children keys for versions, and use the most
-                    recently installed one as the correct R installation."""
+                    # Can't find the install path as a top-level value.
+                    # Inspect the children keys for versions, and use the most
+                    # recently installed one as the correct R installation.
                     max_time = epoch
 
                     for pos in range(10):
@@ -223,7 +223,7 @@ def r_pkg_path():
     package_name = 'arcgisbinding'
 
     root_key = winreg.HKEY_CURRENT_USER
-    reg_path = "SOFTWARE\Esri\ArcGISPro"
+    reg_path = "SOFTWARE\\Esri\\ArcGISPro"
     package_key = 'RintegrationProPackagePath'
     pro_reg = None
 
