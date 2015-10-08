@@ -161,21 +161,53 @@ def r_version():
 r_version_info = r_version()
 
 
-def _r_user_library_path():
+def r_all_lib_paths():
+    """ Package library, locates all known library
+        paths used for R packages."""
+
+    libs_path = []
     # check R_LIBS_USER first
-    lib_path = _environ_path("R_LIBS_USER")
+    if _environ_path("R_LIBS_USER"):
+        libs_path.append(_environ_path("R_LIBS_USER"))
 
     # user's R library in Documents/R/win-library/R-x.x/
-    if not lib_path:
-        (r_major, r_minor, r_patch) = r_version_info.split(".")
+    (r_major, r_minor, r_patch) = r_version_info.split(".")
 
-        r_user_library_path = os.path.join(
-            _documents_folder(), "R", "win-library",
-            "{}.{}".format(r_major, r_minor))
-        if os.path.exists(r_user_library_path):
-            lib_path = r_user_library_path
+    r_user_library_path = os.path.join(
+        _documents_folder(), "R", "win-library",
+        "{}.{}".format(r_major, r_minor))
+    if os.path.exists(r_user_library_path):
+        libs_path.append(r_user_library_path)
 
+    # Next, check the value of R_LIBS -- users may set this
+    # instead of the (more specific) R_LIBS_USER
+    if _environ_path("R_LIBS"):
+        libs_path.append(_environ_path("R_LIBS"))
+
+    # R library in Program Files/R-x.xx/library
+    # NOTE: Requires elevated privileges to write to
+    if r_install_path is not None:
+        r_install_lib_path = os.path.join(
+            r_install_path, "library")
+
+        if os.path.exists(r_install_lib_path):
+            libs_path.append(r_install_lib_path)
+
+    return libs_path
+
+r_all_library_paths = r_all_lib_paths()
+
+
+def r_lib_path():
+    """ Package library, locates the highest-priority
+        library path used for R packages."""
+    lib_path = None
+    all_libs = r_all_library_paths
+    if len(all_libs) > 0:
+        lib_path = all_libs[0]
     return lib_path
+
+r_library_path = r_lib_path()
 
 
 def r_pkg_path():
@@ -219,28 +251,12 @@ def r_pkg_path():
             else:
                 raise
 
-    # try the user-environment variables before other locations,
-    # R_LIBS_USER, R_LIBS can all override the default location
-    # check R_LIBS_USER first, and R standard location
-    lib_path = _r_user_library_path()
-
-    # user's R library in Documents/R/win-library/R-x.x/
-    if not package_path and r_version_info is not None:
-        (r_major, r_minor, r_patch) = r_version_info.split(".")
-
-        r_library_package_path = os.path.join(
-            _documents_folder(), "R", "win-library",
-            "{}.{}".format(r_major, r_minor), package_name)
-        if os.path.exists(r_library_package_path):
-            package_path = r_library_package_path
-
-    # R library in ProgramFiles/R-x.xx/library
-    if not package_path and r_install_path is not None:
-        r_install_package_path = os.path.join(
-            r_install_path, "library", package_name)
-
-        if os.path.exists(r_install_package_path):
-            package_path = r_install_package_path
+    # iterate over all known library path locations,
+    # and check for our package in each.
+    for lib_path in r_all_library_paths:
+        possible_package_path = os.path.join(lib_path, package_name)
+        if os.path.exists(possible_package_path):
+            package_path = possible_package_path
 
     # fallback -- <ArcGIS Install>/Rintegration/arcgisbinding
     if not package_path:
@@ -274,32 +290,6 @@ def r_pkg_version():
     return version
 
 r_package_version = r_pkg_version()
-
-
-def r_lib_path():
-    """ Package library, locates the highest-priority
-        library path used for R packages."""
-
-    # check R_LIBS_USER or R designated default
-    lib_path = _r_user_library_path()
-
-    # Next, check the value of R_LIBS -- users may set this
-    # instead of the (more specific) R_LIBS_USER
-    if not lib_path:
-        lib_path = _environ_path("R_LIBS")
-
-    # R library in ProgramFiles/R-x.xx/library
-    # NOTE: generally requires elevated privileges to write to
-    if not lib_path and r_install_path is not None:
-        r_install_lib_path = os.path.join(
-            r_install_path, "library")
-
-        if os.path.exists(r_install_lib_path):
-            lib_path = r_install_lib_path
-
-    return lib_path
-
-r_library_path = r_lib_path()
 
 
 def arcmap_exists(version=None):
