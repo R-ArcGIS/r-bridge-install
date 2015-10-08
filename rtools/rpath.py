@@ -184,8 +184,13 @@ def r_all_lib_paths():
     if _environ_path("R_LIBS"):
         libs_path.append(_environ_path("R_LIBS"))
 
-    # R library in Program Files/R-x.xx/library
+    # lastly, check for possible site libraries.
     # NOTE: Requires elevated privileges to write to
+
+    if _environ_path("R_LIBS_SITE"):
+        libs_path.append(_environ_path("R_LIBS_SITE"))
+
+    # R library in Program Files/R-x.xx/library
     if r_install_path is not None:
         r_install_lib_path = os.path.join(
             r_install_path, "library")
@@ -217,8 +222,6 @@ def r_pkg_path():
      - [MYDOCUMENTS]/R/win-library/[3-9].[0-9]/ - default for user R packages
      - [ArcGIS]/Resources/Rintegration/arcgisbinding
     """
-    # NOTE to be 100% robust, this may be better implemented as a call to
-    #      R, and parsing out the .libPaths() results.
     package_path = None
     package_name = 'arcgisbinding'
 
