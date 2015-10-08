@@ -275,15 +275,8 @@ r_package_version = r_pkg_version()
 
 
 def r_lib_path():
-    """ Package library.  """
-    lib_path = None
-
-    # user's R library in Documents/R/win-library/R-x.x/
-    if not lib_path and r_version_info is not None:
-        # This doesn't automatically work, R_USER, R_LIBS_USER can both override
-        # the default location. On my machine, it does't work as it gets the
-        # selected location of the Documents library, not the default My Documents
-        # path.
+    """ Package library, locates the highest-priority
+        library path used for R packages."""
 
     # check R_LIBS_USER or R designated default
     lib_path = _r_user_library_path()
@@ -294,6 +287,7 @@ def r_lib_path():
         lib_path = _environ_path("R_LIBS")
 
     # R library in ProgramFiles/R-x.xx/library
+    # NOTE: generally requires elevated privileges to write to
     if not lib_path and r_install_path is not None:
         r_install_lib_path = os.path.join(
             r_install_path, "library")
