@@ -257,6 +257,8 @@ def r_pkg_path():
         possible_package_path = os.path.join(lib_path, package_name)
         if os.path.exists(possible_package_path):
             package_path = possible_package_path
+            # we want the highest-priority library, stop here
+            break
 
     # fallback -- <ArcGIS Install>/Rintegration/arcgisbinding
     if not package_path:
