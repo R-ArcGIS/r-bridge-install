@@ -4,6 +4,12 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import arcpy
+
+import os
+import shutil
+import sys
+
+# create a handle to the windows kernel; want to make Win API calls
 try:
     import ctypes
 except ImportError:
@@ -12,10 +18,6 @@ except ImportError:
           "Try repairing your ArcGIS installation."
     arcpy.AddError(msg)
     sys.exit()
-
-import os
-import shutil
-import sys
 
 from .bootstrap_r import execute_r
 from .github_release import save_url, release_info
