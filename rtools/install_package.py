@@ -12,6 +12,8 @@ import sys
 # create a handle to the windows kernel; want to make Win API calls
 try:
     import ctypes
+    from ctypes import wintypes
+    kdll = ctypes.windll.LoadLibrary("kernel32.dll")
 except ImportError:
     msg = "Unable to connect to your Windows configuration, " + \
           "this is likely due to an incorrect Python installation. " + \
@@ -33,6 +35,23 @@ from .fs import getvolumeinfo, hardlinks_supported, junctions_supported
 
 PACKAGE_NAME = 'arcgisbinding'
 PACKAGE_VERSION = r_pkg_version()
+
+
+def bridge_running(product):
+    """ Check if the R ArcGIS bridge is running. Installation wil fail
+    if the DLL is currently loaded."""
+    running = False
+    # check for the correct DLL
+    if product == 'ArcGISPro':
+        proxy_name = "rarcproxy_pro.dll"
+    else:
+        proxy_name = "rarcproxy.dll"
+    kdll.GetModuleHandleW.restype = wintypes.HMODULE
+    kdll.GetModuleHandleW.argtypes = [wintypes.LPCWSTR]
+    dll_handle = kdll.GetModuleHandleW(proxy_name)  # memory address of DLL
+    if dll_handle is not None:
+        running = True
+    return running
 
 
 def install_package(overwrite=False, r_library_path=r_library_path):
@@ -61,6 +80,13 @@ def install_package(overwrite=False, r_library_path=r_library_path):
 
     if arc_version in ('1.0', '1.0.2') and product == 'ArcGISPro':
         arcpy.AddError("The ArcGIS R bridge requires ArcGIS Pro 1.1 or later.")
+        sys.exit()
+
+    # check the library isn't loaded
+    if bridge_running(product):
+        msg = "The ArcGIS R bridge is currently in-use, restart the " + \
+              "application and try again."
+        arcpy.AddMessage(msg)
         sys.exit()
 
     # detect if we we have a 10.3.1 install that needs linking
@@ -145,7 +171,6 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         detect_msg = "ArcGIS 10.3.1 detected."
         if junctions_supported(link_dir) or hardlinks_supported(link_dir):
             arcpy.AddMessage("{} Creating link to package.".format(detect_msg))
-            kdll = ctypes.windll.LoadLibrary("kernel32.dll")
             kdll.CreateSymbolicLinkW(link_dir, r_package_path, 1)
         else:
             # working on a non-NTFS volume, copy instead
