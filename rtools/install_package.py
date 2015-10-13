@@ -86,7 +86,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     if bridge_running(product):
         msg = "The ArcGIS R bridge is currently in-use, restart the " + \
               "application and try again."
-        arcpy.AddMessage(msg)
+        arcpy.AddError(msg)
         sys.exit()
 
     # detect if we we have a 10.3.1 install that needs linking
