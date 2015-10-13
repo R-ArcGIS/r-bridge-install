@@ -103,7 +103,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
 
     # if we're going to install the bridge in 10.3.1, create the appropriate
     # directory before trying to install.
-    r_integration_dir = os.path.join(install_dir, "Rintegration")
+    r_integration_dir = os.path.join(arcmap_install_path, "Rintegration")
     if arc_version == '10.3.1' and product == 'Desktop' or arcmap_needs_link:
         # TODO escalate privs here? test on non-admin user
         if not os.path.exists(r_integration_dir):
