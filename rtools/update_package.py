@@ -4,10 +4,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import arcpy
-import sys
 
 from .github_release import release_info
-from .install_package import install_package
+from .install_package import install_package, validate_environment
 from .rpath import r_library_path, r_pkg_version
 from .utils import versiontuple
 
@@ -24,19 +23,9 @@ def compare_release_versions():
 
 def update_package(r_library_path=r_library_path):
     """Update ArcGIS R bindings on this machine."""
-    # TODO make sure that the package isn't loaded before updating?
 
-    info = arcpy.GetInstallInfo()
-    arc_version = info['Version']
-    product = info['ProductName']
-
-    if arc_version in ('10.1', '10.2', '10.3.0') and product == 'Desktop':
-        arcpy.AddError("The ArcGIS R bridge requires ArcGIS 10.3.1 or later.")
-        sys.exit()
-
-    if arc_version in ('1.0', '1.0.2') and product == 'ArcGISPro':
-        arcpy.AddError("The ArcGIS R bridge requires ArcGIS Pro 1.1 or later.")
-        sys.exit()
+    # check that we're in a sane installation environment
+    validate_environment()
 
     # TODO also check for the 10.3.1 package version in case of copy-only?
     if r_pkg_version() is None:

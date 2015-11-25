@@ -4,18 +4,22 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import arcpy
+
+import os
+import shutil
+import sys
+
+# create a handle to the windows kernel; want to make Win API calls
 try:
     import ctypes
+    from ctypes import wintypes
+    kdll = ctypes.windll.LoadLibrary("kernel32.dll")
 except ImportError:
     msg = "Unable to connect to your Windows configuration, " + \
           "this is likely due to an incorrect Python installation. " + \
           "Try repairing your ArcGIS installation."
     arcpy.AddError(msg)
     sys.exit()
-
-import os
-import shutil
-import sys
 
 from .bootstrap_r import execute_r
 from .github_release import save_url, release_info
@@ -33,6 +37,60 @@ PACKAGE_NAME = 'arcgisbinding'
 PACKAGE_VERSION = r_pkg_version()
 
 
+def bridge_running(product):
+    """ Check if the R ArcGIS bridge is running. Installation wil fail
+    if the DLL is currently loaded."""
+    running = False
+    # check for the correct DLL
+    if product == 'Pro':
+        proxy_name = "rarcproxy_pro.dll"
+    else:
+        proxy_name = "rarcproxy.dll"
+    kdll.GetModuleHandleW.restype = wintypes.HMODULE
+    kdll.GetModuleHandleW.argtypes = [wintypes.LPCWSTR]
+    dll_handle = kdll.GetModuleHandleW(proxy_name)  # memory address of DLL
+    if dll_handle is not None:
+        running = True
+    return running
+
+
+def arcgis_platform():
+    """ ArcGIS platform details used internally."""
+    info = arcpy.GetInstallInfo()
+    install_dir = info['InstallDir']
+    arc_version = info['Version']
+    if info['ProductName'] == 'ArcGISPro':
+        product = 'Pro'
+    else:
+        # there are other levels, but this is a PYT run from toolbox,
+        # so unlikely to be a non-ArcMap context
+        product = 'ArcMap'
+    return (install_dir, arc_version, product)
+
+
+def validate_environment():
+    """Make sure we have a version of the product that works, and that
+    the library isn't already loaded."""
+
+    (install_dir, arc_version, product) = arcgis_platform()
+    # earlier versions excluded by virtue of not having Python toolbox support
+    no_hook_versions = ('10.1', '10.2', '10.2.1', '10.2.2', '10.3')
+    if arc_version in no_hook_versions and product is not 'Pro':
+        arcpy.AddError("The ArcGIS R bridge requires ArcGIS 10.3.1 or later.")
+        sys.exit()
+
+    if arc_version in ('1.0', '1.0.2') and product == 'Pro':
+        arcpy.AddError("The ArcGIS R bridge requires ArcGIS Pro 1.1 or later.")
+        sys.exit()
+
+    # check the library isn't loaded
+    if bridge_running(product):
+        msg = "The ArcGIS R bridge is currently in-use, restart the " + \
+              "application and try again."
+        arcpy.AddError(msg)
+        sys.exit()
+
+
 def install_package(overwrite=False, r_library_path=r_library_path):
     """Install ArcGIS R bindings onto this machine."""
     if overwrite is True:
@@ -45,24 +103,14 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             arcpy.AddError(msg)
             sys.exit()
 
-    info = arcpy.GetInstallInfo()
-    install_dir = info['InstallDir']
-    arc_version = info['Version']
-    product = info['ProductName']
+    (install_dir, arc_version, product) = arcgis_platform()
     arcmap_needs_link = False
 
-    # earlier versions excluded by virtue of not having Python toolbox support
-    no_hook_versions = ('10.1', '10.2', '10.2.1', '10.2.2', '10.3')
-    if arc_version in no_hook_versions and product is not 'ArcGISPro':
-        arcpy.AddError("The ArcGIS R bridge requires ArcGIS 10.3.1 or later.")
-        sys.exit()
-
-    if arc_version in ('1.0', '1.0.2') and product == 'ArcGISPro':
-        arcpy.AddError("The ArcGIS R bridge requires ArcGIS Pro 1.1 or later.")
-        sys.exit()
+    # check that we're in a sane installation environment
+    validate_environment()
 
     # detect if we we have a 10.3.1 install that needs linking
-    if product == 'ArcGISPro' and arcmap_exists("10.3"):
+    if product == 'Pro' and arcmap_exists("10.3"):
         arcmap_needs_link = True
         msg_base = "Pro side by side with 10.3 detected,"
         if arcmap_install_path is not None:
@@ -75,8 +123,8 @@ def install_package(overwrite=False, r_library_path=r_library_path):
 
     # if we're going to install the bridge in 10.3.1, create the appropriate
     # directory before trying to install.
-    r_integration_dir = os.path.join(install_dir, "Rintegration")
-    if arc_version == '10.3.1' and product == 'Desktop' or arcmap_needs_link:
+    r_integration_dir = os.path.join(arcmap_install_path, "Rintegration")
+    if arc_version == '10.3.1' and product == 'ArcMap' or arcmap_needs_link:
         # TODO escalate privs here? test on non-admin user
         if not os.path.exists(r_integration_dir):
             try:
@@ -88,9 +136,9 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             except IOError:
                 arcpy.AddError(
                     "Insufficient privileges to create 10.3.1 bridge directory."
-                    " Please start ArcMap as an administrator, by right clicking"
+                    " Please start {} as an administrator, by right clicking"
                     " the icon, selecting \"Run as Administrator\", then run this"
-                    " script again.")
+                    " script again.".format(product))
                 sys.exit()
 
     # set an R-compatible temporary folder, if needed.
@@ -105,7 +153,6 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         sys.exit()
 
     # we have a release, write it to disk for installation
-    arcpy.AddMessage(download_url)
     with mkdtemp() as temp_dir:
         zip_name = os.path.basename(download_url)
         package_path = os.path.join(temp_dir, zip_name)
@@ -122,7 +169,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
 
     # at 10.3.1, we _must_ have the bridge installed at the correct location.
     # create a symlink that connects back to the correct location on disk.
-    if arc_version == '10.3.1' and product == 'Desktop' or arcmap_needs_link:
+    if arc_version == '10.3.1' and product == 'ArcMap' or arcmap_needs_link:
         link_dir = os.path.join(r_integration_dir, PACKAGE_NAME)
 
         if os.path.exists(link_dir):
@@ -144,7 +191,6 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         detect_msg = "ArcGIS 10.3.1 detected."
         if junctions_supported(link_dir) or hardlinks_supported(link_dir):
             arcpy.AddMessage("{} Creating link to package.".format(detect_msg))
-            kdll = ctypes.windll.LoadLibrary("kernel32.dll")
             kdll.CreateSymbolicLinkW(link_dir, r_package_path, 1)
         else:
             # working on a non-NTFS volume, copy instead

@@ -31,6 +31,43 @@ fnf_exception = getattr(__builtins__,
 
 log = logging.getLogger(__name__)
 
+# cyptes constants
+CSIDL_PROFILE = 40
+SHGFP_TYPE_CURRENT = 0
+
+
+def _documents_folder():
+    """ Get the users' documents folder, which is where R will place
+        its default user-specific 'personal' library.
+
+        Returns: full path of user library."""
+
+    # first, check if the user has an R_USER variable initialized.
+    documents_folder = _environ_path("R_USER")
+
+    if not documents_folder:
+        # Call SHGetFolderPath using ctypes.
+        ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        ctypes.windll.shell32.SHGetFolderPathW(
+            0, CSIDL_PROFILE, 0, SHGFP_TYPE_CURRENT, ctypes_buffer)
+        # This isn't a language-independent way, but CSIDL_PERSONAL gets
+        # the wrong path.
+        # TODO: Test in non-English locales.
+        documents_folder = os.path.join(ctypes_buffer.value, "Documents")
+
+    return documents_folder
+
+
+def _environ_path(var=None):
+    """ Check if an environment variable is an existing path."""
+    path = None
+    if var and var in os.environ:
+        var_path = os.environ[var]
+        if os.path.exists(var_path):
+            path = var_path
+
+    return path
+
 
 def r_path():
     """Find R installation path from registry."""
@@ -81,9 +118,9 @@ def r_path():
                 if not r_install_path:
                     log.debug("Top-level install path not defined. " +
                               "Checking version-specific locations.")
-                    """Can't find the install path as a top-level value.
-                    Inspect the children keys for versions, and use the most
-                    recently installed one as the correct R installation."""
+                    # Can't find the install path as a top-level value.
+                    # Inspect the children keys for versions, and use the most
+                    # recently installed one as the correct R installation.
                     max_time = epoch
 
                     for pos in range(10):
@@ -102,7 +139,8 @@ def r_path():
                                      winreg.KEY_WOW64_64KEY))
                                 r_install_path = winreg.QueryValueEx(
                                     r_version_reg, "InstallPath")[0]
-                                r_version_info = winreg.QueryInfoKey(r_version_reg)
+                                r_version_info = winreg.QueryInfoKey(
+                                    r_version_reg)
                                 r_install_time = epoch + datetime.timedelta(
                                     microseconds=r_version_info[2]/10)
                                 if max_time < r_install_time:
@@ -123,20 +161,72 @@ def r_version():
 r_version_info = r_version()
 
 
+def r_all_lib_paths():
+    """ Package library, locates all known library
+        paths used for R packages."""
+
+    libs_path = []
+    # check R_LIBS_USER first
+    if _environ_path("R_LIBS_USER"):
+        libs_path.append(_environ_path("R_LIBS_USER"))
+
+    # user's R library in Documents/R/win-library/R-x.x/
+    (r_major, r_minor, r_patch) = r_version_info.split(".")
+
+    r_user_library_path = os.path.join(
+        _documents_folder(), "R", "win-library",
+        "{}.{}".format(r_major, r_minor))
+    if os.path.exists(r_user_library_path):
+        libs_path.append(r_user_library_path)
+
+    # Next, check the value of R_LIBS -- users may set this
+    # instead of the (more specific) R_LIBS_USER
+    if _environ_path("R_LIBS"):
+        libs_path.append(_environ_path("R_LIBS"))
+
+    # lastly, check for possible site libraries.
+    # NOTE: Requires elevated privileges to write to
+
+    if _environ_path("R_LIBS_SITE"):
+        libs_path.append(_environ_path("R_LIBS_SITE"))
+
+    # R library in Program Files/R-x.xx/library
+    if r_install_path is not None:
+        r_install_lib_path = os.path.join(
+            r_install_path, "library")
+
+        if os.path.exists(r_install_lib_path):
+            libs_path.append(r_install_lib_path)
+
+    return libs_path
+
+r_all_library_paths = r_all_lib_paths()
+
+
+def r_lib_path():
+    """ Package library, locates the highest-priority
+        library path used for R packages."""
+    lib_path = None
+    all_libs = r_all_library_paths
+    if len(all_libs) > 0:
+        lib_path = all_libs[0]
+    return lib_path
+
+r_library_path = r_lib_path()
+
+
 def r_pkg_path():
     """
     Package path search. Locations searched:
      - HKCU\\Software\\Esri\\ArcGISPro\\RintegrationProPackagePath
-     - [USERDOCUMENT]/R/win-library/[3-9].[0-9]/ - default for user R packages
+     - [MYDOCUMENTS]/R/win-library/[3-9].[0-9]/ - default for user R packages
      - [ArcGIS]/Resources/Rintegration/arcgisbinding
     """
-    # NOTE to be 100% robust, this may be better implemented as a call to
-    #      R, and parsing out the .libPaths() results.
     package_path = None
     package_name = 'arcgisbinding'
 
     root_key = winreg.HKEY_CURRENT_USER
-    reg_path = "SOFTWARE\Esri\ArcGISPro"
+    reg_path = "SOFTWARE\\Esri\\ArcGISPro"
     package_key = 'RintegrationProPackagePath'
     pro_reg = None
 
@@ -164,40 +254,14 @@ def r_pkg_path():
             else:
                 raise
 
-    # user's R library in Documents/R/win-library/R-x.x/
-    if not package_path and r_version_info is not None:
-        # This doesn't automatically work, R_USER, R_LIBS_USER can both override
-        # the default location. On my machine, it does't work as it gets the
-        # selected location of the Documents library, not the default My Documents
-        # path.
-
-        # Call SHGetFolderPath using ctypes.
-        CSIDL_PROFILE = 40
-        SHGFP_TYPE_CURRENT = 0
-
-        ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
-        ctypes.windll.shell32.SHGetFolderPathW(
-            0, CSIDL_PROFILE, 0, SHGFP_TYPE_CURRENT, ctypes_buffer)
-        # NOTE this isn't a language-independent way, but CSIDL_PERSONAL gets
-        #      the wrong path.
-        documents_folder = os.path.join(ctypes_buffer.value, "Documents")
-
-        # check with R -- what is R_LIBS_USER set to?
-        (r_major, r_minor, r_patch) = r_version_info.split(".")
-
-        r_library_package_path = os.path.join(
-            documents_folder, "R", "win-library",
-            "{}.{}".format(r_major, r_minor), package_name)
-        if os.path.exists(r_library_package_path):
-            package_path = r_library_package_path
-
-    # R library in ProgramFiles/R-x.xx/library
-    if not package_path and r_install_path is not None:
-        r_install_package_path = os.path.join(
-            r_install_path, "library", package_name)
-
-        if os.path.exists(r_install_package_path):
-            package_path = r_install_package_path
+    # iterate over all known library path locations,
+    # and check for our package in each.
+    for lib_path in r_all_library_paths:
+        possible_package_path = os.path.join(lib_path, package_name)
+        if os.path.exists(possible_package_path):
+            package_path = possible_package_path
+            # we want the highest-priority library, stop here
+            break
 
     # fallback -- <ArcGIS Install>/Rintegration/arcgisbinding
     if not package_path:
@@ -231,50 +295,6 @@ def r_pkg_version():
     return version
 
 r_package_version = r_pkg_version()
-
-
-def r_lib_path():
-    """ Package library.  """
-    lib_path = None
-
-    # user's R library in Documents/R/win-library/R-x.x/
-    if not lib_path and r_version_info is not None:
-        # This doesn't automatically work, R_USER, R_LIBS_USER can both override
-        # the default location. On my machine, it does't work as it gets the
-        # selected location of the Documents library, not the default My Documents
-        # path.
-
-        # Call SHGetFolderPath using ctypes.
-        CSIDL_PROFILE = 40
-        SHGFP_TYPE_CURRENT = 0
-
-        ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
-        ctypes.windll.shell32.SHGetFolderPathW(
-            0, CSIDL_PROFILE, 0, SHGFP_TYPE_CURRENT, ctypes_buffer)
-        # NOTE this isn't a language-independent way, but CSIDL_PERSONAL gets
-        #      the wrong path.
-        documents_folder = os.path.join(ctypes_buffer.value, "Documents")
-
-        # check with R -- what is R_LIBS_USER set to?
-        (r_major, r_minor, r_patch) = r_version_info.split(".")
-
-        r_user_library_path = os.path.join(
-            documents_folder, "R", "win-library",
-            "{}.{}".format(r_major, r_minor))
-        if os.path.exists(r_user_library_path):
-            lib_path = r_user_library_path
-
-    # R library in ProgramFiles/R-x.xx/library
-    if not lib_path and r_install_path is not None:
-        r_install_lib_path = os.path.join(
-            r_install_path, "library")
-
-        if os.path.exists(r_install_lib_path):
-            lib_path = r_install_lib_path
-
-    return lib_path
-
-r_library_path = r_lib_path()
 
 
 def arcmap_exists(version=None):

@@ -111,6 +111,8 @@ class RInstallDetails(object):
                 rtools.r_version_info, rtools.r_install_path))
             arcpy.AddMessage("R packages will be installed into: {}".format(
                 rtools.r_library_path))
+            arcpy.AddMessage("All R package libraries detected: {}".format(
+                ";".join(rtools.r_all_library_paths)))
 
             current_package_path = rtools.rpath.r_pkg_path()
             current_package_version = rtools.rpath.r_pkg_version()

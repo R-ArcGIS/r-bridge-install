@@ -20,6 +20,7 @@ def execute_r(command='Rcmd', *args):
 
         rcommand_path = os.path.join(
             r_install_path, 'bin', platform(), "{}.exe".format(command))
+        rcommand_dir = os.path.dirname(rcommand_path)
 
         if r_command_valid(rcommand_path):
             command_parts = [rcommand_path] + list(args)
@@ -38,7 +39,8 @@ def execute_r(command='Rcmd', *args):
             process = subprocess.Popen(command_parts,
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE,
-                                       universal_newlines=True)
+                                       universal_newlines=True,
+                                       cwd=rcommand_dir)
             while process.poll() is None:
                 stdout_msg = process.stdout.readline().strip()
                 if stdout_msg:
