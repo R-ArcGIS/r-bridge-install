@@ -21,8 +21,8 @@ Prerequisites
 Installation
 ------------
 
-First, make sure you've installed an appropriate version of R, 3.1 or later. The ins
-
+First, make sure you've installed an appropriate version of R, 3.1 or later. The installation in 30 seconds:
+![](https://github.com/R-ArcGIS/r-bridge-install/blob/master/img/r-install-from-pyt.gif)
 
 ###ArcGIS 10.3.1
  - In the [Catalog window](http://desktop.arcgis.com/en/desktop/latest/map/working-with-arcmap/what-is-the-catalog-window-.htm), navigate to the folder containing the Python Toolbox, `R Integration.pyt`. _Note_: You may have to first add a folder connection to the location that you extracted the files or downloaded via GitHub.
