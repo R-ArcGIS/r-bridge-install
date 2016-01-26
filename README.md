@@ -18,10 +18,11 @@ Prerequisites
 ![](https://github.com/R-ArcGIS/r-bridge-install/blob/master/img/version-block-detailed.png)
 
 
-How to Run
-----------
+Installation
+------------
 
-First, make sure you've installed an appropriate version of R, 3.1 or later. 
+First, make sure you've installed an appropriate version of R, 3.1 or later. The ins
+
 
 ###ArcGIS 10.3.1
  - In the [Catalog window](http://desktop.arcgis.com/en/desktop/latest/map/working-with-arcmap/what-is-the-catalog-window-.htm), navigate to the folder containing the Python Toolbox, `R Integration.pyt`. _Note_: You may have to first add a folder connection to the location that you extracted the files or downloaded via GitHub.
@@ -42,12 +43,13 @@ First, make sure you've installed an appropriate version of R, 3.1 or later.
 If everything worked, you should be ready to start! See [Next Steps](#next-steps) for where to go from here. Remember, you can update the package at any time by running the 'Update R bindings' script.
 
 ###Problems Installing?
- - A few things to check:
+ - A few things to check :
     + All [prerequisites](#prerequisites) have been met, such as the right version of R for your platform, and a current release of ArcGIS.
     + Make sure that your user has administrator access, and try running ArcGIS as an Administrator:
      - Start ArcGIS as an administrator, by right clicking the icon, selecting 'Run as Administrator', then trying the script
      - If that doesn't work, the package directory, "arcgisbinding", that gets installed into the R folder (usually, C:\Users\<username>\Documents\R\win-library\) into the requested place, C:\Program Files (x86)\ArcGIS\Desktop\Rintegration
     + On Windows 7, [KB2533623](https://support.microsoft.com/en-us/kb/2533623) must be installed. Without this hotfix, the library will generate the error "The procedure entry point AddDllDirectory could be located".
+ - The release can be manually installed into R, as shown in [this screencast]((https://4326.us/R/zipinst/). Use this if you're planning on mostly working from R.
  - Still stuck? [Add an issue and we'll take a look](https://github.com/R-ArcGIS/r-bridge-install/issues). ([More about GitHub Issues](https://help.github.com/articles/about-issues/))
 
 
