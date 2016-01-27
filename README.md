@@ -21,7 +21,9 @@ Prerequisites
 Installation
 ------------
 
-First, make sure you've installed an appropriate version of R, 3.1 or later. The clip below shows how to download, install and verify proper installation of the bridge:
+First, make sure you've installed an appropriate version of R, 3.1 or later.
+
+The clip below shows how to download, install and verify proper installation of the bridge:
 
 ![](https://github.com/R-ArcGIS/r-bridge-install/blob/master/img/r-install-from-pyt.gif)
 
