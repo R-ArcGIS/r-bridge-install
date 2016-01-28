@@ -37,6 +37,16 @@ fnf_exception = getattr(__builtins__,
                         'FileNotFoundError', WindowsError)
 
 
+def log_exception(err):
+    """Make sure we can properly decode the exception,
+       otherwise non-ASCII characters will cause a
+       crash in the exception despite our intent to
+       only log the results."""
+
+    # enc = locale.getpreferredencoding() or 'ascii'
+    log.debug("Exception generated:")
+    log.debug(err)
+    # log.debug(error.encode(enc, 'ignore').decode('utf-8')))
 
 
 def _documents_folder():
@@ -99,7 +109,7 @@ def r_path():
                                        0, (winreg.KEY_WOW64_64KEY +
                                            winreg.KEY_READ))
             except fnf_exception as error:
-                log.debug("Exception generated: {}".format(error))
+                log_exception(error)
                 if error.errno == errno.ENOENT:
                     pass
                 else:
@@ -112,7 +122,7 @@ def r_path():
                     log.info("Looking for InstallPath.")
                     r_install_path = winreg.QueryValueEx(r_reg, "InstallPath")[0]
                 except fnf_exception as error:
-                    log.debug("Exception generated: {}".format(error))
+                    log_exception(error)
                     if error.errno == errno.ENOENT:
                         pass
                     else:
@@ -316,6 +326,7 @@ def arcmap_exists(version=None):
             root_key, reg_path, 0,
             (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
     except fnf_exception as error:
+        log_exception(error)
         if error.errno == errno.ENOENT:
             pass
         else:
@@ -350,6 +361,7 @@ def arcmap_path(version=None):
                 root_key, reg_path, 0,
                 (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
         except fnf_exception as error:
+            log_exception(error)
             if error.errno == errno.ENOENT:
                 pass
             else:
@@ -363,6 +375,7 @@ def arcmap_path(version=None):
                 if os.path.exists(arcmap_path_raw):
                     arcmap_path = arcmap_path_raw.strip('\\')
             except fnf_exception as error:
+                log_exception(error)
                 if error.errno == errno.ENOENT:
                     pass
                 else:
