@@ -15,7 +15,14 @@ except ImportError:
     # py 2
     import _winreg as winreg
 
+log = logging.getLogger(__name__)
 
+# cyptes constants
+CSIDL_PROFILE = 40
+SHGFP_TYPE_CURRENT = 0
+
+
+# TODO re-intergrate this.
 @contextmanager
 def ignored(*exceptions):
     """Use contextlib to ignore all windows specific errors.
@@ -29,11 +36,7 @@ def ignored(*exceptions):
 fnf_exception = getattr(__builtins__,
                         'FileNotFoundError', WindowsError)
 
-log = logging.getLogger(__name__)
 
-# cyptes constants
-CSIDL_PROFILE = 40
-SHGFP_TYPE_CURRENT = 0
 
 
 def _documents_folder():
