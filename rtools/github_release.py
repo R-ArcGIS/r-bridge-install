@@ -23,7 +23,8 @@ def save_url(url, output_path):
     try:
         r = request.urlopen(url)
     except request.HTTPError as e:
-        arcpy.AddError("Failed to download '{}', {}.".format(url, e))
+        arcpy.AddError("Failed to download '{}', {}.".format(
+            url, e.reason))
         sys.exit()
 
     if r.headers['content-type'] in valid_types and r.code == 200:
@@ -43,7 +44,7 @@ def parse_json_url(url):
         r = request.urlopen(url)
     except request.URLError as e:
         arcpy.AddError("Failed to download '{}', error: {}.".format(
-            url, e))
+            url, e.reason))
         sys.exit()
 
     if r.code == 200:
