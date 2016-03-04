@@ -27,7 +27,6 @@ def update_package(r_library_path=r_library_path):
     # check that we're in a sane installation environment
     validate_environment()
 
-    # TODO also check for the 10.3.1 package version in case of copy-only?
     if r_pkg_version() is None:
         arcpy.AddWarning(
             "Package is not installed. First use the \"Install R bindings\" script.")
