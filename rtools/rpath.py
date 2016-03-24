@@ -6,6 +6,7 @@ from contextlib import contextmanager
 import ctypes.wintypes
 import datetime
 import errno
+import getpass
 import logging
 import os
 
@@ -71,6 +72,67 @@ def _documents_folder():
     return documents_folder
 
 
+def _user_sids():
+    """Map between usernames and the related SID."""
+    user_sids = {}
+
+    root_key = winreg.HKEY_LOCAL_MACHINE
+    reg_path = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList"
+
+    try:
+        log.info("OpenKey on {}, with READ + WOW64\n".format(reg_path))
+        sid_reg = winreg.OpenKey(root_key, reg_path,
+                                 0, (winreg.KEY_WOW64_64KEY +
+                                     winreg.KEY_READ))
+
+    except fnf_exception as error:
+        log_exception(error)
+        if error.errno == errno.ENOENT:
+            pass
+        else:
+            raise
+
+    if sid_reg:
+        subkey_count = winreg.QueryInfoKey(sid_reg)[0]
+        for pos in range(subkey_count):
+            try:
+                sid = winreg.EnumKey(sid_reg, pos)
+            except:
+                pass
+            if sid:
+                profile_path_key = "{}\\{}".format(reg_path, sid)
+                try:
+                    profile_path_reg = winreg.OpenKey(
+                        root_key, profile_path_key, 0,
+                        (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+
+                    profile_path = winreg.QueryValueEx(
+                        profile_path_reg, "ProfileImagePath")[0]
+
+                    username = profile_path.split("\\")[-1]
+                    user_sids[username] = sid
+                except:
+                    pass
+
+    return user_sids
+
+
+def _user_hive(username=None):
+    """Find the registry hive for a particular user."""
+    hive = None
+    sids = _user_sids()
+    if username and username in sids:
+        sid = sids[username]
+        root_key = winreg.HKEY_USERS
+        try:
+            hive = winreg.OpenKey(root_key, sid,
+                                  0, (winreg.KEY_WOW64_64KEY +
+                                      winreg.KEY_READ))
+        except:
+            pass
+    return hive
+
+
 def _environ_path(var=None):
     """ Check if an environment variable is an existing path."""
     path = None
@@ -91,7 +153,9 @@ def r_path():
 
     root_keys = {
         'HKCU': winreg.HKEY_CURRENT_USER,
-        'HKLM': winreg.HKEY_LOCAL_MACHINE
+        'HKLM': winreg.HKEY_LOCAL_MACHINE,
+        # if we have a user hive, also check that.
+        'HKU': _user_hive(getpass.getuser())
     }
     r_reg_paths = ["SOFTWARE\\R-core\\R",
                    "SOFTWARE\\R-core\\R64",
@@ -186,18 +250,15 @@ def r_all_lib_paths():
     if _environ_path("R_LIBS_USER"):
         libs_path.append(_environ_path("R_LIBS_USER"))
 
-    if not r_version_info:
-        # No valid R install info found.
-        return libs_path
+    if r_version_info:
+        # user's R library in Documents/R/win-library/R-x.x/
+        (r_major, r_minor, r_patch) = r_version_info.split(".")
 
-    # user's R library in Documents/R/win-library/R-x.x/
-    (r_major, r_minor, r_patch) = r_version_info.split(".")
-
-    r_user_library_path = os.path.join(
-        _documents_folder(), "R", "win-library",
-        "{}.{}".format(r_major, r_minor))
-    if os.path.exists(r_user_library_path):
-        libs_path.append(r_user_library_path)
+        r_user_library_path = os.path.join(
+            _documents_folder(), "R", "win-library",
+            "{}.{}".format(r_major, r_minor))
+        if os.path.exists(r_user_library_path):
+            libs_path.append(r_user_library_path)
 
     # Next, check the value of R_LIBS -- users may set this
     # instead of the (more specific) R_LIBS_USER
