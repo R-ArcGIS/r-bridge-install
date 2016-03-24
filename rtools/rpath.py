@@ -135,8 +135,11 @@ def r_path():
                     # Inspect the children keys for versions, and use the most
                     # recently installed one as the correct R installation.
                     max_time = epoch
-
-                    for pos in range(10):
+                    try:
+                        subkey_count = winreg.QueryInfoKey(r_reg)[0]
+                    except:
+                        subkey_count = 10
+                    for pos in range(subkey_count):
                         # TODO ensure this is robust to errors
                         with ignored(WindowsError):
                             log.info("checking EnumKey pos {}".format(pos))
