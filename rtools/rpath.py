@@ -186,6 +186,10 @@ def r_all_lib_paths():
     if _environ_path("R_LIBS_USER"):
         libs_path.append(_environ_path("R_LIBS_USER"))
 
+    if not r_version_info:
+        # No valid R install info found.
+        return libs_path
+
     # user's R library in Documents/R/win-library/R-x.x/
     (r_major, r_minor, r_patch) = r_version_info.split(".")
 
