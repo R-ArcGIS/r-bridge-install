@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from contextlib import contextmanager
+from collections import OrderedDict
 import ctypes.wintypes
 import datetime
 import errno
@@ -151,12 +152,12 @@ def r_path():
     # set an epoch for a Windows FILETIME object
     epoch = datetime.datetime(1601, 1, 1)
 
-    root_keys = {
-        'HKCU': winreg.HKEY_CURRENT_USER,
-        'HKLM': winreg.HKEY_LOCAL_MACHINE,
-        # if we have a user hive, also check that.
-        'HKU': _user_hive(getpass.getuser())
-    }
+    root_keys = OrderedDict((
+        # if we have a user hive, also check that first.
+        ('HKU', _user_hive(getpass.getuser())),
+        ('HKCU', winreg.HKEY_CURRENT_USER),
+        ('HKLM', winreg.HKEY_LOCAL_MACHINE),
+    ))
     r_reg_paths = ["SOFTWARE\\R-core\\R",
                    "SOFTWARE\\R-core\\R64",
                    "SOFTWARE\\Wow6432Node\\R-Core\\R",
