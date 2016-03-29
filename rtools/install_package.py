@@ -27,11 +27,19 @@ from .rpath import (
     r_library_path,
     r_pkg_path,
     r_pkg_version,
+    r_version_info,
     arcmap_exists,
     arcmap_install_path,
+    fnf_exception,
+    handle_fnf,
 )
 from .utils import mkdtemp, set_env_tmpdir
 from .fs import getvolumeinfo, hardlinks_supported, junctions_supported
+try:
+    import winreg
+except ImportError:
+    # py 2
+    import _winreg as winreg
 
 PACKAGE_NAME = 'arcgisbinding'
 PACKAGE_VERSION = r_pkg_version()
@@ -89,6 +97,35 @@ def validate_environment():
               "application and try again."
         arcpy.AddError(msg)
         sys.exit()
+
+
+def create_registry_entry(product, arc_version):
+    """Create a registry link back to the arcgisbinding package."""
+    root_key = winreg.HKEY_CURRENT_USER
+    if product == 'Pro':
+        product_name = "ArcGISPro"
+    else:
+        product_name = "Desktop{}".format(arc_version)
+    reg_path = "SOFTWARE\\Esri\\{}".format(product_name)
+
+    package_key = 'RintegrationProPackagePath'
+    link_key = None
+
+    try:
+        full_access = (winreg.KEY_WOW64_64KEY + winreg.KEY_ALL_ACCESS)
+        # find the key, 64- or 32-bit we want it all
+        link_key = winreg.OpenKey(root_key, reg_path, 0, full_access)
+    except fnf_exception as error:
+        handle_fnf(error)
+
+    if link_key:
+        try:
+            arcpy.AddMessage("Using registry key to link install.")
+            binding_path = "{}\\{}".format(r_library_path, "arcgisbinding")
+            winreg.SetValueEx(link_key, package_key, 0,
+                              winreg.REG_SZ, binding_path)
+        except fnf_exception as error:
+            handle_fnf(error)
 
 
 def install_package(overwrite=False, r_library_path=r_library_path):
@@ -166,6 +203,22 @@ def install_package(overwrite=False, r_library_path=r_library_path):
 
     # return TMPDIR to its original value; only need it for Rcmd INSTALL
     set_env_tmpdir(orig_tmpdir)
+
+    # at 10.4 and Pro <=1.2, if the user has installed a version with a non-
+    # numeric patch level (e.g. 3.2.4revised), and the bridge is installed
+    # into Program Files, the link will fail. In this case, set the
+    # appropriate registry key so that the bridge will still work. Note that
+    # this isn't ideal, because it will persist after updates, but it is
+    # better than the bridge failing to work at all.
+    if (arc_version == '10.4' and product == 'Desktop') or \
+            (arc_version in ('1.1', '1.1.1', '1.2', '1.3')
+             and product == 'Pro'):
+
+        (r_major, r_minor, r_patchlevel) = r_version_info.split(".")
+        # if we have a patchlevel like '4revised' or '3alpha', and
+        # the global library path is used, then use the registry key.
+        if len(r_patchlevel) > 1 and 'Program Files' in r_library_path:
+            create_registry_entry(product, arc_version)
 
     # at 10.3.1, we _must_ have the bridge installed at the correct location.
     # create a symlink that connects back to the correct location on disk.
