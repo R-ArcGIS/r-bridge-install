@@ -117,8 +117,8 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             msg = "{} installing bridge for both environments.".format(msg_base)
             arcpy.AddMessage(msg)
         else:
-            msg = "{} but unable to find install path. ArcGIS bridge " + \
-                  "must be manually installed in ArcGIS 10.3.".format(msg_base)
+            msg = "{} but unable to find install path.".format(msg_base) + \
+                  "ArcGIS bridge must be manually installed in ArcGIS 10.3."
             arcpy.AddWarning(msg)
 
     # if we're going to install the bridge in 10.3.1, create the appropriate
