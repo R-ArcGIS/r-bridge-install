@@ -120,18 +120,20 @@ def _user_sids():
 
 def _user_hive(username=None):
     """Find the registry hive for a particular user."""
-    hive = None
+    hive_base = None
     sids = _user_sids()
     if username and username in sids:
         sid = sids[username]
         root_key = winreg.HKEY_USERS
         try:
-            hive = winreg.OpenKey(root_key, sid,
-                                  0, (winreg.KEY_WOW64_64KEY +
-                                      winreg.KEY_READ))
+            hive_reg = winreg.OpenKey(root_key, sid,
+                                      0, (winreg.KEY_WOW64_64KEY +
+                                          winreg.KEY_READ))
+            if hive_reg:
+                hive_base = sid
         except:
             pass
-    return hive
+    return hive_base
 
 
 def _environ_path(var=None):
@@ -154,7 +156,7 @@ def r_path():
 
     root_keys = OrderedDict((
         # if we have a user hive, also check that first.
-        ('HKU', _user_hive(getpass.getuser())),
+        ('HKU', winreg.HKEY_USERS),
         ('HKCU', winreg.HKEY_CURRENT_USER),
         ('HKLM', winreg.HKEY_LOCAL_MACHINE),
     ))
@@ -170,6 +172,11 @@ def r_path():
             try:
                 log.info("OpenKey on {}, with READ + WOW64\n".format(
                     r_path))
+                # HKU hive should be prepended to search
+                if key_name is 'HKU':
+                    r_path = "{}\\{}".format(
+                        _user_hive(getpass.getuser()), r_path)
+
                 r_reg = winreg.OpenKey(root_key, r_path,
                                        0, (winreg.KEY_WOW64_64KEY +
                                            winreg.KEY_READ))
