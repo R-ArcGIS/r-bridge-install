@@ -39,6 +39,14 @@ fnf_exception = getattr(__builtins__,
                         'FileNotFoundError', WindowsError)
 
 
+def handle_fnf(exception):
+    log_exception(exception)
+    if exception.errno == errno.ENOENT:
+        pass
+    else:
+        raise
+
+
 def log_exception(err):
     """Make sure we can properly decode the exception,
        otherwise non-ASCII characters will cause a
@@ -87,11 +95,7 @@ def _user_sids():
                                      winreg.KEY_READ))
 
     except fnf_exception as error:
-        log_exception(error)
-        if error.errno == errno.ENOENT:
-            pass
-        else:
-            raise
+        handle_fnf(error)
 
     if sid_reg:
         subkey_count = winreg.QueryInfoKey(sid_reg)[0]
@@ -181,11 +185,7 @@ def r_path():
                                        0, (winreg.KEY_WOW64_64KEY +
                                            winreg.KEY_READ))
             except fnf_exception as error:
-                log_exception(error)
-                if error.errno == errno.ENOENT:
-                    pass
-                else:
-                    raise
+                handle_fnf(error)
 
             if r_reg:
                 log.info("Successfully found {}".format(r_path))
@@ -194,11 +194,7 @@ def r_path():
                     log.info("Looking for InstallPath.")
                     r_install_path = winreg.QueryValueEx(r_reg, "InstallPath")[0]
                 except fnf_exception as error:
-                    log_exception(error)
-                    if error.errno == errno.ENOENT:
-                        pass
-                    else:
-                        raise
+                    handle_fnf(error)
 
                 if not r_install_path:
                     log.debug("Top-level install path not defined. " +
@@ -325,10 +321,7 @@ def r_pkg_path():
             root_key, reg_path, 0,
             (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
     except fnf_exception as error:
-        if error.errno == errno.ENOENT:
-            pass
-        else:
-            raise
+        handle_fnf(error)
 
     if pro_reg:
         try:
@@ -338,10 +331,7 @@ def r_pkg_path():
             if os.path.exists(package_path_raw):
                 package_path = package_path_raw
         except fnf_exception as error:
-            if error.errno == errno.ENOENT:
-                pass
-            else:
-                raise
+            handle_fnf(error)
 
     # iterate over all known library path locations,
     # and check for our package in each.
@@ -409,11 +399,7 @@ def arcmap_exists(version=None):
                 root_key, reg_path, 0,
                 (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
         except fnf_exception as error:
-            log_exception(error)
-            if error.errno == errno.ENOENT:
-                pass
-            else:
-                raise
+            handle_fnf(error)
 
         if arcmap_reg:
             installed = True
@@ -451,11 +437,7 @@ def arcmap_path(version=None):
                     root_key, reg_path, 0,
                     (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
             except fnf_exception as error:
-                log_exception(error)
-                if error.errno == errno.ENOENT:
-                    pass
-                else:
-                    raise
+                handle_fnf(error)
 
             if arcmap_reg:
                 try:
@@ -465,11 +447,7 @@ def arcmap_path(version=None):
                     if os.path.exists(arcmap_path_raw):
                         arcmap_path = arcmap_path_raw.strip('\\')
                 except fnf_exception as error:
-                    log_exception(error)
-                    if error.errno == errno.ENOENT:
-                        pass
-                    else:
-                        raise
+                    handle_fnf(error)
 
     return arcmap_path
 
