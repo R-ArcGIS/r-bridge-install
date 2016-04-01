@@ -12,7 +12,7 @@ from rtools.utils import dedent
 class Toolbox(object):
     def __init__(self):
         self.label = 'R Integration'
-        self.alias = ''
+        self.alias = 'rintegration'
         self.tools = [UpdateBindings, InstallBindings, RInstallDetails, RVersion]
 
 
