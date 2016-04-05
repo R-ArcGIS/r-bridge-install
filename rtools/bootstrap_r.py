@@ -24,7 +24,7 @@ def execute_r(command='Rcmd', *args):
 
         if r_command_valid(rcommand_path):
             command_parts = [rcommand_path] + list(args)
-
+            arcpy.AddMessage(subprocess.list2cmdline(command_parts))
             if command is 'Rscript':
                 script_base = os.path.dirname(os.path.realpath(__file__))
                 # if we have a script, it should be the first passed arg
