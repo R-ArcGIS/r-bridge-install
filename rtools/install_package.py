@@ -211,7 +211,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     # this isn't ideal, because it will persist after updates, but it is
     # better than the bridge failing to work at all.
     if (arc_version == '10.4' and product == 'Desktop') or \
-            (arc_version in ('1.1', '1.1.1', '1.2', '1.3')
+            (arc_version in ('1.1', '1.1.1', '1.2')
              and product == 'Pro'):
 
         (r_major, r_minor, r_patchlevel) = r_version_info.split(".")
