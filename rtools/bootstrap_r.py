@@ -18,13 +18,21 @@ def execute_r(command='Rcmd', *args):
             arcpy.AddError("Invalid R command, '{}.exe'.".format(command))
             return
 
+        rcommand_exe = "{}.exe".format(command)
         rcommand_path = os.path.join(
-            r_install_path, 'bin', platform(), "{}.exe".format(command))
+            r_install_path, 'bin', platform(), rcommand_exe)
         rcommand_dir = os.path.dirname(rcommand_path)
+        # Change directory prior to execution, have a user who continuously
+        # gets "'C:\Program' is not recognized as an internal or external
+        # command, operable program or batch file."
+        sys_path = os.getenv("PATH")
+        if os.path.exists(rcommand_dir):
+            os.putenv("PATH", ";".join([rcommand_dir, sys_path]))
 
         if r_command_valid(rcommand_path):
-            command_parts = [rcommand_path] + list(args)
+            command_parts = [rcommand_exe] + list(args)
             arcpy.AddMessage(subprocess.list2cmdline(command_parts))
+
             if command is 'Rscript':
                 script_base = os.path.dirname(os.path.realpath(__file__))
                 # if we have a script, it should be the first passed arg
