@@ -23,6 +23,8 @@ Installation
 
 First, make sure you've installed an appropriate version of R, 3.1 or later.
 
+If you need to install offline, follow the [offline installation instructions](#offline-Installation).
+
 The clip below shows how to download, install and verify proper installation of the bridge:
 
 ![](https://github.com/R-ArcGIS/r-bridge-install/blob/master/img/r-install-from-pyt.gif)
@@ -44,6 +46,13 @@ The clip below shows how to download, install and verify proper installation of 
   - Run the `Install R bindings` script. You can then test that the bridge is able to see your R installation by running the `Print R Version` and `R Installation Details` tools, and running the included [sample tools](https://github.com/R-ArcGIS/r-bridge/tree/master/package/arc/inst/examples).
 
 If everything worked, you should be ready to start! See [Next Steps](#next-steps) for where to go from here. Remember, you can update the package at any time by running the 'Update R bindings' script.
+
+###Offline Installation
+ - From a machine that does have internet access:
+   + [download this repository](https://github.com/R-ArcGIS/r-bridge-install/archive/master.zip).
+   + download the [latest version of the arcgisbinding package](https://github.com/R-ArcGIS/r-bridge/releases/latest). As of writing, this is `arcgisbinding_1.0.0.118.zip`.
+ - Copy both zip files onto the machine that you're targeting offline installation. Extract the r-bridge-install zip. Place the `arcgisbinding_1.0.0.118.zip` into the same directory as the "R Integration" Python toolbox.
+ - Run the installation procedure as listed above.
 
 ###Problems Installing?
  - A few things to check :
