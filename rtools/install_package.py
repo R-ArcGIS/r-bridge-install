@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 import arcpy
 
+import glob
 import os
 import shutil
 import sys
@@ -185,15 +186,28 @@ def install_package(overwrite=False, r_library_path=r_library_path):
 
     download_url = release_info()[0]
     if download_url is None:
-        arcpy.AddError(
-            "Unable to get current release information. Check internet connection.")
-        sys.exit()
+        arcpy.AddWarning(
+            "Unable to get current release information."
+            " Trying offline installation.")
+
+    base_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
+    zip_glob = glob.glob(os.path.join(base_path, "arcgisbinding*.zip"))
+    # see if we have a local copy of the binding
+    if zip_glob and os.path.exists(zip_glob[0]):
+        zip_path = zip_glob[0]
+        local_install = True
+    else:
+        local_install = False
 
     # we have a release, write it to disk for installation
     with mkdtemp() as temp_dir:
         zip_name = os.path.basename(download_url)
         package_path = os.path.join(temp_dir, zip_name)
-        save_url(download_url, package_path)
+        if local_install:
+            arcpy.AddMessage("Found local copy of binding, installing from zip")
+            shutil.copyfile(zip_path, package_path)
+        else:
+            save_url(download_url, package_path)
         if os.path.exists(package_path):
             # TODO -- need to do UAC escalation here?
             # call the R installation script
