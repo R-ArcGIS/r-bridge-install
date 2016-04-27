@@ -22,7 +22,7 @@ Installation
 
 First, make sure you've installed an appropriate version of R, 3.1 or later.
 
-If you need to install offline, follow the [offline installation instructions](#offline-Installation).
+If you need to install offline, follow the [offline installation instructions](#offline-installation).
 
 The clip below shows how to download, install and verify proper installation of the bridge:
 
