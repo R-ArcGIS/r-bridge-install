@@ -23,7 +23,7 @@ def save_url(url, output_path):
     try:
         r = request.urlopen(url)
     except request.HTTPError as e:
-        arcpy.AddError("Failed to download '{}', {}.".format(
+        arcpy.AddError("Unable to access '{}', {}.".format(
             url, e.reason))
         sys.exit()
 
@@ -32,7 +32,7 @@ def save_url(url, output_path):
         with open(output_path, 'wb') as f:
             f.write(r.read())
     else:
-        arcpy.AddError("Failed to download '{}', invalid content.".format(url))
+        arcpy.AddError("Unable to access '{}', invalid content.".format(url))
         arcpy.AddError("Content type: {}, response code: {}".format(
             r.headers['content-type'], r.code))
 
@@ -40,20 +40,19 @@ def save_url(url, output_path):
 def parse_json_url(url):
     """Parse and return a JSON response from a URL."""
     res = None
+    r = None
     try:
         r = request.urlopen(url)
+        if r.code == 200:
+            # urllib doesn't know bytestreams
+            str_response = r.read().decode('utf-8')
+            res = json.loads(str_response)
+        else:
+            msg = "Unable to access'{}', invalid response.".format(url)
+            arcpy.AddWarning(msg)
     except request.URLError as e:
-        arcpy.AddError("Failed to download '{}', error: {}.".format(
+        arcpy.AddWarning("Unable to access'{}', error: {}.".format(
             url, e.reason))
-        sys.exit()
-
-    if r.code == 200:
-        # urllib doesn't know bytestreams
-        str_response = r.read().decode('utf-8')
-        res = json.loads(str_response)
-    else:
-        arcpy.AddError("Failed to download '{}', invalid response.".format(url))
-        sys.exit()
 
     return res
 
@@ -68,14 +67,13 @@ def release_info():
     download_url = None
     tag = None
     json_r = parse_json_url(latest_url)
-    if 'assets' in json_r:
+    if json_r is not None and 'assets' in json_r:
         assets = json_r['assets'][0]
         if 'browser_download_url' in assets and \
                 'tag_name' in json_r:
             download_url = assets['browser_download_url']
             tag = json_r['tag_name']
 
-    if tag is None or download_url is None:
         arcpy.AddError("Invalid GitHub API response for URL '{}'".format(
             latest_url))
         sys.exit()
