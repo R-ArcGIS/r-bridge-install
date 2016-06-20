@@ -194,18 +194,25 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             "Unable to get current release information."
             " Trying offline installation.")
 
+    local_install = False
     base_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
     zip_glob = glob.glob(os.path.join(base_path, "arcgisbinding*.zip"))
     # see if we have a local copy of the binding
     if zip_glob and os.path.exists(zip_glob[0]):
-        zip_path = zip_glob[0]
         local_install = True
+        zip_path = zip_glob[0]
+        zip_name = os.path.basename(zip_path)
+    elif not download_url and not local_install:
+        arcpy.AddError(
+            "Unable to access online package, and no "
+            "local copy of package found.")
+        return
     else:
         local_install = False
+        zip_name = os.path.basename(download_url)
 
     # we have a release, write it to disk for installation
     with mkdtemp() as temp_dir:
-        zip_name = os.path.basename(download_url)
         package_path = os.path.join(temp_dir, zip_name)
         if local_install:
             arcpy.AddMessage("Found local copy of binding, installing from zip")
