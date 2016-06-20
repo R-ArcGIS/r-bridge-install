@@ -71,8 +71,8 @@ def release_info():
                 'tag_name' in json_r:
             download_url = assets['browser_download_url']
             tag = json_r['tag_name']
-
-        arcpy.AddError("Invalid GitHub API response for URL '{}'".format(
-            latest_url))
+        if not download_url or not tag:
+            arcpy.AddError("Invalid GitHub API response for URL '{}'".format(
+                latest_url))
 
     return (download_url, tag)
