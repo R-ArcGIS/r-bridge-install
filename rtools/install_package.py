@@ -77,25 +77,34 @@ def arcgis_platform():
     return (install_dir, arc_version, product)
 
 
-def validate_environment():
+def validate_environment(overwrite):
     """Make sure we have a version of the product that works, and that
     the library isn't already loaded."""
 
     (install_dir, arc_version, product) = arcgis_platform()
     # earlier versions excluded by virtue of not having Python toolbox support
     no_hook_versions = ('10.1', '10.2', '10.2.1', '10.2.2', '10.3')
+    valid_env = True
+    msg = None
     if arc_version in no_hook_versions and product is not 'Pro':
-        arcpy.AddError("The ArcGIS R bridge requires ArcGIS 10.3.1 or later.")
-        sys.exit()
+        msg = "The ArcGIS R bridge requires ArcGIS 10.3.1 or later."
+        valid_env = False
 
     if arc_version in ('1.0', '1.0.2') and product == 'Pro':
-        arcpy.AddError("The ArcGIS R bridge requires ArcGIS Pro 1.1 or later.")
-        sys.exit()
+        msg = "The ArcGIS R bridge requires ArcGIS Pro 1.1 or later."
+        valid_env = False
+
+    if not overwrite and PACKAGE_VERSION:
+        msg = "The ArcGIS R bridge is installed, and overwrite is disabled."
+        valid_env = False
 
     # check the library isn't loaded
     if bridge_running(product):
         msg = "The ArcGIS R bridge is currently in-use, restart the " + \
               "application and try again."
+        valid_env = False
+
+    if not valid_env:
         arcpy.AddError(msg)
         sys.exit()
 
@@ -135,17 +144,12 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         overwrite = True
     else:
         overwrite = False
-    if not overwrite:
-        if PACKAGE_VERSION:
-            msg = "The ArcGIS R bridge is installed, and overwrite is disabled."
-            arcpy.AddError(msg)
-            sys.exit()
 
     (install_dir, arc_version, product) = arcgis_platform()
     arcmap_needs_link = False
 
     # check that we're in a sane installation environment
-    validate_environment()
+    validate_environment(overwrite)
 
     # detect if we we have a 10.3.1 install that needs linking
     if product == 'Pro' and arcmap_exists("10.3"):
@@ -177,7 +181,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
                     " Please start {} as an administrator, by right clicking"
                     " the icon, selecting \"Run as Administrator\", then run this"
                     " script again.".format(product))
-                sys.exit()
+                return
 
     # set an R-compatible temporary folder, if needed.
     orig_tmpdir = os.getenv("TMPDIR")
@@ -214,6 +218,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             execute_r('Rcmd', 'INSTALL', package_path)
         else:
             arcpy.AddError("No package found at {}".format(package_path))
+            return
 
     # return TMPDIR to its original value; only need it for Rcmd INSTALL
     set_env_tmpdir(orig_tmpdir)
@@ -237,7 +242,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
                   "  (e.g. 3.2.4 Revised) in a global install. Please use" + \
                   " another version of R."
             arcpy.AddError(msg)
-            sys.exit()
+            return
 
     # at 10.3.1, we _must_ have the bridge installed at the correct location.
     # create a symlink that connects back to the correct location on disk.
@@ -258,7 +263,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             arcpy.AddMessage("R package path: {}.".format(r_package_path))
         else:
             arcpy.AddError("Unable to locate R package library. Link failed.")
-            sys.exit()
+            return
 
         detect_msg = "ArcGIS 10.3.1 detected."
         if junctions_supported(link_dir) or hardlinks_supported(link_dir):

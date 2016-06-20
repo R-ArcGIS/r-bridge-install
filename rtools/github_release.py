@@ -3,7 +3,6 @@ from __future__ import print_function
 
 import arcpy
 import json
-import sys
 try:
     import urllib.request as request
 except ImportError:
@@ -25,7 +24,6 @@ def save_url(url, output_path):
     except request.HTTPError as e:
         arcpy.AddError("Unable to access '{}', {}.".format(
             url, e.reason))
-        sys.exit()
 
     if r.headers['content-type'] in valid_types and r.code == 200:
         arcpy.AddMessage("Saving URL to '{}'".format(output_path))
@@ -76,6 +74,5 @@ def release_info():
 
         arcpy.AddError("Invalid GitHub API response for URL '{}'".format(
             latest_url))
-        sys.exit()
 
     return (download_url, tag)
