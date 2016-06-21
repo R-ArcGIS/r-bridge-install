@@ -5,10 +5,13 @@ from __future__ import absolute_import
 
 import os
 import subprocess
+import sys
 import arcpy
 
 from .rpath import r_install_path
 from .utils import platform
+
+PY2 = sys.version_info[0] == 2
 
 
 def execute_r(command='Rcmd', *args):
@@ -25,9 +28,13 @@ def execute_r(command='Rcmd', *args):
         # Change directory prior to execution, have a user who continuously
         # gets "'C:\Program' is not recognized as an internal or external
         # command, operable program or batch file."
-        sys_path = os.getenv("PATH")
         if os.path.exists(rcommand_dir):
-            os.putenv("PATH", ";".join([rcommand_dir, sys_path]))
+            parts = [rcommand_dir, os.getenv("PATH")]
+            if PY2:
+                set_path = ";".join(parts).encode("utf8", "replace")
+            else:
+                set_path = ";".join(parts)
+            os.putenv("PATH", set_path)
 
         if r_command_valid(rcommand_path):
             command_parts = [rcommand_exe] + list(args)
