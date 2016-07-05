@@ -25,7 +25,7 @@ def update_package(r_library_path=r_library_path):
     """Update ArcGIS R bindings on this machine."""
 
     # check that we're in a sane installation environment
-    validate_environment()
+    validate_environment(overwrite=True)
 
     if r_pkg_version() is None:
         arcpy.AddWarning(
