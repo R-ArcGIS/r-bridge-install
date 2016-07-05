@@ -77,7 +77,7 @@ def arcgis_platform():
     return (install_dir, arc_version, product)
 
 
-def validate_environment(overwrite):
+def validate_environment(overwrite=None):
     """Make sure we have a version of the product that works, and that
     the library isn't already loaded."""
 
