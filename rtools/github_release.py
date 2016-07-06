@@ -51,6 +51,9 @@ def parse_json_url(url):
     except request.URLError as e:
         arcpy.AddWarning("Unable to access'{}', error: {}.".format(
             url, e.reason))
+    except LookupError as e:
+        arcpy.AddWarning("Unable to access'{}', lookup error: {}.".format(
+            url, e.reason))
 
     return res
 
