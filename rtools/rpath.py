@@ -69,6 +69,10 @@ def _documents_folder():
     documents_folder = _environ_path("R_USER")
 
     if not documents_folder:
+        # next, check if the user has the HOME variable set
+        documents_folder = _environ_path("HOME")
+
+    if not documents_folder:
         # Call SHGetFolderPath using ctypes.
         ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
         ctypes.windll.shell32.SHGetFolderPathW(
