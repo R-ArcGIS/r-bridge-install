@@ -84,7 +84,40 @@ class RInstallDetails(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        return []
+        # detected R installation directory
+        r_install = arcpy.Parameter()
+        r_install.name = 'r_install'
+        r_install.displayName = 'R Installation Directory'
+        r_install.parameterType = 'Derived'
+        r_install.direction = 'Output'
+        r_install.datatype = 'GPString'
+
+        # detected R package library
+        r_pkgs = arcpy.Parameter()
+        r_pkgs.name = 'r_pkgs'
+        r_pkgs.displayName = 'R Package Library'
+        r_pkgs.parameterType = 'Derived'
+        r_pkgs.direction = 'Output'
+        r_pkgs.datatype = 'GPString'
+
+        # binding version
+        bind_ver= arcpy.Parameter()
+        bind_ver.name = 'bind_ver'
+        bind_ver.displayName = 'ArcGIS binding version'
+        bind_ver.parameterType = 'Derived'
+        bind_ver.direction = 'Output'
+        bind_ver.datatype = 'GPString'
+
+        # binding path
+        bind_path= arcpy.Parameter()
+        bind_path.name = 'bind_path'
+        bind_path.displayName = 'ArcGIS binding path'
+        bind_path.parameterType = 'Derived'
+        bind_path.direction = 'Output'
+        bind_path.datatype = 'GPString'
+
+        return [r_install, r_pkgs, bind_ver, bind_path]
+
 
     def isLicensed(self):
         return True
@@ -109,8 +142,12 @@ class RInstallDetails(object):
         else:
             arcpy.AddMessage("R (version {}), installed in: {}".format(
                 rtools.r_version_info, rtools.r_install_path))
+            parameters[0].value = rtools.r_install_path
+
             arcpy.AddMessage("R packages will be installed into: {}".format(
                 rtools.r_library_path))
+            parameters[1].value = rtools.r_library_path
+
             arcpy.AddMessage("All R package libraries detected: {}".format(
                 ";".join(rtools.r_all_library_paths)))
 
@@ -123,8 +160,9 @@ class RInstallDetails(object):
             else:
                 arcpy.AddMessage(
                     "The ArcGIS R package (version {}) is installed at: {}".format(
-                        rtools.rpath.r_pkg_version(), current_package_path))
-
+                        current_package_version, current_package_path))
+                parameters[2].value = current_package_version
+                parameters[3].value = current_package_path
 
 class InstallBindings(object):
 
