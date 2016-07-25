@@ -67,6 +67,8 @@ If everything worked, you should be ready to start! See [Next Steps](#next-steps
 Next Steps
 ----------
 
+Additional resources and discussion at the [R-ArcGIS project on GeoNet](https://geonet.esri.com/groups/rstats)
+
 Want to use tools others have developed?
  - See how complex problems can be solved with R and ArcGIS in the [Sample Tools](https://github.com/R-ArcGIS/r-sample-tools), such as model-based clustering and combining parametric and non-parametric models with semiparametric regression.
  - Check out the community page for more tools _Coming Soon_
