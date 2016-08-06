@@ -156,7 +156,7 @@ class RInstallDetails(object):
             if current_package_path is None or current_package_version is None:
                 arcpy.AddWarning("The ArcGIS R package is not installed."
                                  " Use the 'Install R Bindings' tool to "
-                                 "install them.")
+                                 "install it.")
             else:
                 arcpy.AddMessage(
                     "The ArcGIS R package (version {}) is installed at: {}".format(
