@@ -5,6 +5,7 @@ from .rpath import (
     arcmap_install_path,
     r_install_path,
     r_version_info,
+    r_version_dictionary,
     r_package_path,
     r_package_version,
     r_library_path,

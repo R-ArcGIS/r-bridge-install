@@ -155,9 +155,15 @@ def _environ_path(var=None):
     return path
 
 
-def r_path():
-    """Find R installation path from registry."""
-    r_install_path = None
+def r_reg_value(lookup_key='path'):
+    """Find R related registry values."""
+
+    lookup_keys = ['path', 'version', 'dict']
+    if lookup_key not in lookup_keys:
+        log.warn("Looking up invalid key {}".format(lookup_key))
+        return None
+
+    r_reg_value = None
 
     # set an epoch for a Windows FILETIME object
     epoch = datetime.datetime(1601, 1, 1)
@@ -195,17 +201,22 @@ def r_path():
                 log.info("Successfully found {}".format(r_path))
 
                 try:
-                    log.info("Looking for InstallPath.")
-                    r_install_path = winreg.QueryValueEx(r_reg, "InstallPath")[0]
+                    log.info("Looking for {}.".format(lookup_key))
+                    r_reg_value = winreg.QueryValueEx(r_reg, lookup_key)[0]
                 except fnf_exception as error:
                     handle_fnf(error)
 
-                if not r_install_path:
-                    log.debug("Top-level install path not defined. " +
+                if not r_reg_value:
+                    log.debug("Top-level value not defined. " +
                               "Checking version-specific locations.")
                     # Can't find the install path as a top-level value.
                     # Inspect the children keys for versions, and use the most
                     # recently installed one as the correct R installation.
+
+                    if lookup_key == 'dict':
+                        # version: install path
+                        r_reg_value = {}
+
                     max_time = epoch
                     try:
                         subkey_count = winreg.QueryInfoKey(r_reg)[0]
@@ -217,22 +228,39 @@ def r_path():
                             log.info("checking EnumKey pos {}".format(pos))
                             r_base_key = winreg.EnumKey(r_reg, pos)
 
-                            # test for the right path based on age
                             if r_base_key:
+                                # in the case that we've asked for dict, return
+                                # all instances of desired key
+                                if lookup_key == 'dict':
+                                    r_reg_value[r_base_key] = None
+
                                 r_version_key = "{}\\{}".format(
                                     r_path, r_base_key)
+                                log.info("got version key: {}".format(r_version_key))
                                 r_version_reg = winreg.OpenKey(
                                     root_key, r_version_key, 0,
                                     (winreg.KEY_READ |
                                      winreg.KEY_WOW64_64KEY))
-                                r_install_path = winreg.QueryValueEx(
+
+                                version_path = winreg.QueryValueEx(
                                     r_version_reg, "InstallPath")[0]
+                                if lookup_key == 'path':
+                                    r_reg_value = version_path
+                                if lookup_key == 'dict':
+                                    r_reg_value[r_base_key] = version_path
+
                                 r_version_info = winreg.QueryInfoKey(
                                     r_version_reg)
                                 r_install_time = epoch + datetime.timedelta(
                                     microseconds=r_version_info[2]/10)
                                 if max_time < r_install_time:
                                     max_time = r_install_time
+    return r_reg_value
+
+
+def r_path():
+    """Find R installation path from registry."""
+    r_install_path = r_reg_value("path")
     log.info("Final R install path: {}".format(r_install_path))
     return r_install_path
 
@@ -240,13 +268,28 @@ r_install_path = r_path()
 
 
 def r_version():
-    r_version = None
-    r_path_l = r_install_path
-    if r_path_l is not None:
-        r_version = r_path_l.split('-')[1]
+    """Find current R version."""
+
+    # first try the registry
+    r_version = r_reg_value("version")
+
+    # next, try string splitting
+    if not r_version:
+        r_path_l = r_install_path
+        if r_path_l is not None:
+            if '-' in r_path_l:
+                r_version = r_path_l.split('-')[1]
     return r_version
 
 r_version_info = r_version()
+
+
+def r_version_dict():
+    """Find all versions of R in registry."""
+    r_versions = r_reg_value("dict")
+    return r_versions
+
+r_version_dictionary = r_version_dict()
 
 
 def r_all_lib_paths():
