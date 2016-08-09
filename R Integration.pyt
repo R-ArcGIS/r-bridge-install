@@ -28,13 +28,34 @@ class UpdateBindings(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        return []
+        version = arcpy.Parameter()
+        version.name = 'r_version'
+        version.displayName = 'Selected R Version (Set As Default)'
+        version.parameterType = 'Required'
+        version.direction = 'Input'
+        version.datatype = 'GPString'
+
+        return [version]
 
     def isLicensed(self):
         return True
 
     def updateParameters(self, parameters):
         validator = getattr(self, 'ToolValidator', None)
+
+        if not parameters[0].altered:
+            # check the registry 'Current' version only
+            if rtools.r_version(current_only=True):
+                if rtools.r_version_info:
+                    parameters[0].value = rtools.r_version_info
+                    parameters[0].enabled = False
+            else:
+                # otherwise, pull up the list of installed versions
+                # and allow the user to select one to set.
+                r_versions = rtools.r_version_dictionary
+                if r_versions:
+                    parameters[0].filter.list = r_versions.keys()
+
         if validator:
             return validator(parameters).updateParameters()
 
@@ -44,6 +65,8 @@ class UpdateBindings(object):
             return validator(parameters).updateMessages()
 
     def execute(self, parameters, messages):
+        if parameters[0].enabled:
+            set_default_r(parameters[0].value)
         rtools.update_package()
 
 
@@ -183,13 +206,34 @@ class InstallBindings(object):
         param_1.datatype = 'GPBoolean'
         param_1.value = False
 
-        return [param_1]
+        param_2 = arcpy.Parameter()
+        param_2.name = 'r_version'
+        param_2.displayName = 'Selected R Version (Set As Default)'
+        param_2.parameterType = 'Required'
+        param_2.direction = 'Input'
+        param_2.datatype = 'GPString'
+
+        return [param_1, param_2]
 
     def isLicensed(self):
         return True
 
     def updateParameters(self, parameters):
         validator = getattr(self, 'ToolValidator', None)
+
+        if not parameters[1].altered:
+            # check the registry 'Current' version only
+            if rtools.r_version(current_only=True):
+                if rtools.r_version_info:
+                    parameters[1].value = rtools.r_version_info
+                    parameters[1].enabled = False
+            else:
+                # otherwise, pull up the list of installed versions
+                # and allow the user to select one to set.
+                r_versions = rtools.r_version_dictionary
+                if r_versions:
+                    parameters[1].filter.list = r_versions.keys()
+
         if validator:
             return validator(parameters).updateParameters()
 
@@ -199,4 +243,20 @@ class InstallBindings(object):
             return validator(parameters).updateMessages()
 
     def execute(self, parameters, messages):
+        if parameters[1].enabled:
+            set_default_r(parameters[1].value)
         rtools.install_package(overwrite=parameters[0].value)
+
+
+def set_default_r(current_version):
+    """If the user doesn't have a default R configured,
+       they are asked to set one here in the tool. Update the related
+       registry keys as needed."""
+
+    arcpy.AddMessage("Updating default R to {}".format(current_version))
+
+    # get the related data for the version selected
+    install_path = rtools.r_version_dictionary[current_version]
+    if install_path:
+        # insert the values into the registry
+        rtools.r_set_install(install_path, current_version)
