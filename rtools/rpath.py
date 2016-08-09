@@ -23,6 +23,9 @@ log = logging.getLogger(__name__)
 CSIDL_PROFILE = 40
 SHGFP_TYPE_CURRENT = 0
 
+READ_ACCESS = (winreg.KEY_WOW64_64KEY + winreg.KEY_READ)
+FULL_ACCESS = (winreg.KEY_WOW64_64KEY + winreg.KEY_ALL_ACCESS)
+
 
 # TODO re-intergrate this.
 @contextmanager
@@ -95,8 +98,7 @@ def _user_sids():
     try:
         log.info("OpenKey on {}, with READ + WOW64\n".format(reg_path))
         sid_reg = winreg.OpenKey(root_key, reg_path,
-                                 0, (winreg.KEY_WOW64_64KEY +
-                                     winreg.KEY_READ))
+                                 0, READ_ACCESS)
 
     except fnf_exception as error:
         handle_fnf(error)
@@ -112,8 +114,7 @@ def _user_sids():
                 profile_path_key = "{}\\{}".format(reg_path, sid)
                 try:
                     profile_path_reg = winreg.OpenKey(
-                        root_key, profile_path_key, 0,
-                        (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+                        root_key, profile_path_key, 0, READ_ACCESS)
 
                     profile_path = winreg.QueryValueEx(
                         profile_path_reg, "ProfileImagePath")[0]
@@ -134,9 +135,7 @@ def _user_hive(username=None):
         sid = sids[username]
         root_key = winreg.HKEY_USERS
         try:
-            hive_reg = winreg.OpenKey(root_key, sid,
-                                      0, (winreg.KEY_WOW64_64KEY +
-                                          winreg.KEY_READ))
+            hive_reg = winreg.OpenKey(root_key, sid, 0, READ_ACCESS)
             if hive_reg:
                 hive_base = sid
         except:
@@ -191,9 +190,7 @@ def r_reg_value(lookup_key='path'):
                     r_path = "{}\\{}".format(
                         _user_hive(getpass.getuser()), r_path)
 
-                r_reg = winreg.OpenKey(root_key, r_path,
-                                       0, (winreg.KEY_WOW64_64KEY +
-                                           winreg.KEY_READ))
+                r_reg = winreg.OpenKey(root_key, r_path, 0, READ_ACCESS)
             except fnf_exception as error:
                 handle_fnf(error)
 
@@ -236,11 +233,9 @@ def r_reg_value(lookup_key='path'):
 
                                 r_version_key = "{}\\{}".format(
                                     r_path, r_base_key)
-                                log.info("got version key: {}".format(r_version_key))
                                 r_version_reg = winreg.OpenKey(
                                     root_key, r_version_key, 0,
-                                    (winreg.KEY_READ |
-                                     winreg.KEY_WOW64_64KEY))
+                                    READ_ACCESS)
 
                                 version_path = winreg.QueryValueEx(
                                     r_version_reg, "InstallPath")[0]
@@ -364,9 +359,7 @@ def r_pkg_path():
 
     try:
         # find the key, 64- or 32-bit we want it all
-        pro_reg = winreg.OpenKey(
-            root_key, reg_path, 0,
-            (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+        pro_reg = winreg.OpenKey(root_key, reg_path, 0, READ_ACCESS)
     except fnf_exception as error:
         handle_fnf(error)
 
@@ -442,9 +435,7 @@ def arcmap_exists(version=None):
         arcmap_reg = None
         try:
             # find the key, 64- or 32-bit we want it all
-            arcmap_reg = winreg.OpenKey(
-                root_key, reg_path, 0,
-                (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+            arcmap_reg = winreg.OpenKey(root_key, reg_path, 0, READ_ACCESS)
         except fnf_exception as error:
             handle_fnf(error)
 
@@ -481,8 +472,7 @@ def arcmap_path(version=None):
             try:
                 # find the key, 64- or 32-bit we want it all
                 arcmap_reg = winreg.OpenKey(
-                    root_key, reg_path, 0,
-                    (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+                    root_key, reg_path, 0, READ_ACCESS)
             except fnf_exception as error:
                 handle_fnf(error)
 
