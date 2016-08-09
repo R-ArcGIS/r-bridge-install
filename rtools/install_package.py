@@ -240,16 +240,17 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             (arc_version in ('1.1', '1.1.1', '1.2')
              and product == 'Pro'):
 
-        (r_major, r_minor, r_patchlevel) = r_version_info.split(".")
-        # if we have a patchlevel like '4revised' or '3alpha', and
-        # the global library path is used, then use the registry key.
-        if len(r_patchlevel) > 1 and 'Program Files' in r_library_path:
-            # create_registry_entry(product, arc_version)
-            msg = "Currently, the bridge doesn't support patched releases" + \
-                  "  (e.g. 3.2.4 Revised) in a global install. Please use" + \
-                  " another version of R."
-            arcpy.AddError(msg)
-            return
+        if r_version_info:
+            (r_major, r_minor, r_patchlevel) = r_version_info.split(".")
+            # if we have a patchlevel like '4revised' or '3alpha', and
+            # the global library path is used, then use the registry key.
+            if len(r_patchlevel) > 1 and 'Program Files' in r_library_path:
+                # create_registry_entry(product, arc_version)
+                msg = ("Currently, the bridge doesn't support patched releases"
+                       " (e.g. 3.2.4 Revised) in a global install. Please use"
+                       " another version of R.")
+                arcpy.AddError(msg)
+                return
 
     # at 10.3.1, we _must_ have the bridge installed at the correct location.
     # create a symlink that connects back to the correct location on disk.

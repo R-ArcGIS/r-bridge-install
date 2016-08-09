@@ -101,7 +101,7 @@ class RInstallDetails(object):
         r_pkgs.datatype = 'GPString'
 
         # binding version
-        bind_ver= arcpy.Parameter()
+        bind_ver = arcpy.Parameter()
         bind_ver.name = 'bind_ver'
         bind_ver.displayName = 'ArcGIS binding version'
         bind_ver.parameterType = 'Derived'
@@ -109,7 +109,7 @@ class RInstallDetails(object):
         bind_ver.datatype = 'GPString'
 
         # binding path
-        bind_path= arcpy.Parameter()
+        bind_path = arcpy.Parameter()
         bind_path.name = 'bind_path'
         bind_path.displayName = 'ArcGIS binding path'
         bind_path.parameterType = 'Derived'
@@ -117,7 +117,6 @@ class RInstallDetails(object):
         bind_path.datatype = 'GPString'
 
         return [r_install, r_pkgs, bind_ver, bind_path]
-
 
     def isLicensed(self):
         return True
@@ -163,6 +162,7 @@ class RInstallDetails(object):
                         current_package_version, current_package_path))
                 parameters[2].value = current_package_version
                 parameters[3].value = current_package_path
+
 
 class InstallBindings(object):
 
