@@ -57,8 +57,7 @@ def log_exception(err):
        only log the results."""
 
     # enc = locale.getpreferredencoding() or 'ascii'
-    log.debug("Exception generated:")
-    log.debug(err)
+    log.debug("Exception generated: {}".format(err))
     # log.debug(error.encode(enc, 'ignore').decode('utf-8')))
 
 
@@ -96,7 +95,7 @@ def _user_sids():
     reg_path = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList"
 
     try:
-        log.info("OpenKey on {}, with READ + WOW64\n".format(reg_path))
+        log.info("OpenKey on {}, with READ + WOW64".format(reg_path))
         sid_reg = winreg.OpenKey(root_key, reg_path,
                                  0, READ_ACCESS)
 
@@ -157,7 +156,7 @@ def _environ_path(var=None):
 def r_reg_value(lookup_key='path'):
     """Find R related registry values."""
 
-    lookup_keys = ['path', 'version', 'dict']
+    lookup_keys = ['InstallPath', 'Current Version', 'dict']
     if lookup_key not in lookup_keys:
         log.warn("Looking up invalid key {}".format(lookup_key))
         return None
@@ -173,6 +172,7 @@ def r_reg_value(lookup_key='path'):
         ('HKCU', winreg.HKEY_CURRENT_USER),
         ('HKLM', winreg.HKEY_LOCAL_MACHINE),
     ))
+    # only work with the R and R64 hives, ArcGIS doesn't examine R32
     r_reg_paths = ["SOFTWARE\\R-core\\R",
                    "SOFTWARE\\R-core\\R64",
                    "SOFTWARE\\Wow6432Node\\R-Core\\R",
@@ -183,8 +183,7 @@ def r_reg_value(lookup_key='path'):
             r_reg = None
 
             try:
-                log.info("OpenKey on {}, with READ + WOW64\n".format(
-                    r_path))
+                log.info("OpenKey on {}, with READ + WOW64".format(r_path))
                 # HKU hive should be prepended to search
                 if key_name is 'HKU':
                     r_path = "{}\\{}".format(
@@ -226,8 +225,8 @@ def r_reg_value(lookup_key='path'):
                             r_base_key = winreg.EnumKey(r_reg, pos)
 
                             if r_base_key:
-                                # in the case that we've asked for dict, return
-                                # all instances of desired key
+                                # in the case that we've asked for dict,
+                                # return all instances of desired key
                                 if lookup_key == 'dict':
                                     r_reg_value[r_base_key] = None
 
@@ -253,23 +252,78 @@ def r_reg_value(lookup_key='path'):
     return r_reg_value
 
 
+def r_reg_write_value(r_key=None, r_value=None):
+    """Write R registry values."""
+    # keys to write
+    r_write_keys = ('InstallPath', 'Current Version')
+    if r_key not in r_write_keys:
+        log.warn("asked to write an invalid key, {}".format(r_key))
+        return None
+
+    root_keys = OrderedDict((
+        # try HKLM, then HKCU
+        ('HKLM', winreg.HKEY_LOCAL_MACHINE),
+        ('HKCU', winreg.HKEY_CURRENT_USER)
+    ))
+    # only work with the R and R64 hives, ArcGIS doesn't examine R32
+    r_reg_paths = ["SOFTWARE\\R-core\\R",
+                   "SOFTWARE\\R-core\\R64",
+                   "SOFTWARE\\Wow6432Node\\R-Core\\R",
+                   "SOFTWARE\\Wow6432Node\\R-Core\\R64"]
+
+    # keys to write
+    r_write_keys = ('InstallPath', 'Current Version')
+
+    for (key_name, root_key) in list(root_keys.items()):
+        for r_path in r_reg_paths:
+            r_reg = None
+
+            try:
+                log.info("CreateKeyEx on {}\\{}, with write".format(
+                    key_name, r_path))
+                # HKU hive should be prepended to search
+                if key_name is 'HKU':
+                    r_path = "{}\\{}".format(
+                        _user_hive(getpass.getuser()), r_path)
+                r_reg = winreg.CreateKeyEx(root_key, r_path, 0, FULL_ACCESS)
+            except fnf_exception as error:
+                handle_fnf(error)
+
+            if r_reg:
+                try:
+                    log.info('writing "{}" to "{}"'.format(r_key, r_value))
+                    winreg.SetValueEx(r_reg, r_key, 0,
+                                      winreg.REG_SZ, r_value)
+                except fnf_exception as error:
+                    handle_fnf(error)
+
+
+def r_set_install(install_path=None, current_version=None):
+    """Set default install for R."""
+    if install_path:
+        log.info("writing 'InstallPath' value {}".format(install_path))
+        r_reg_write_value("InstallPath", install_path)
+    if current_version:
+        log.info("writing 'Current Version' value {}".format(current_version))
+        r_reg_write_value("Current Version", current_version)
+
+
 def r_path():
     """Find R installation path from registry."""
-    r_install_path = r_reg_value("path")
+    r_install_path = r_reg_value("InstallPath")
     log.info("Final R install path: {}".format(r_install_path))
     return r_install_path
 
 r_install_path = r_path()
 
 
-def r_version():
+def r_version(current_only=False):
     """Find current R version."""
 
     # first try the registry
-    r_version = r_reg_value("version")
+    r_version = r_reg_value("Current Version")
 
-    # next, try string splitting
-    if not r_version:
+    if not current_only and not r_version:
         r_path_l = r_install_path
         if r_path_l is not None:
             if '-' in r_path_l:
