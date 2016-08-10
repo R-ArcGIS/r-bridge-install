@@ -95,7 +95,8 @@ def validate_environment(overwrite=None):
         valid_env = False
 
     if not overwrite and PACKAGE_VERSION:
-        msg = "The ArcGIS R bridge is installed, and overwrite is disabled."
+        msg = "The ArcGIS R bridge is already installed, and " + \
+             "overwrite is disabled."
         valid_env = False
 
     # check the library isn't loaded
