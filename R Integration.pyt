@@ -45,17 +45,14 @@ class UpdateBindings(object):
 
         if not parameters[0].altered:
             # check the registry 'Current' version only
-            if rtools.r_version(current_only=True):
-                if rtools.r_version_info:
-                    parameters[0].value = rtools.r_version_info
-                    parameters[0].enabled = False
+            if rtools.r_version(True):
+                parameters[0].value = rtools.r_version(True)
+                parameters[0].enabled = False
             else:
                 # otherwise, pull up the list of installed versions
                 # and allow the user to select one to set.
                 r_versions = rtools.r_version_dictionary
-                if r_versions:
-                    parameters[0].filter.list = r_versions.keys()
-
+                parameters[0].filter.list = r_versions.keys()
         if validator:
             return validator(parameters).updateParameters()
 
@@ -223,17 +220,14 @@ class InstallBindings(object):
 
         if not parameters[1].altered:
             # check the registry 'Current' version only
-            if rtools.r_version(current_only=True):
-                if rtools.r_version_info:
-                    parameters[1].value = rtools.r_version_info
-                    parameters[1].enabled = False
+            if rtools.r_version(True):
+                parameters[1].value = rtools.r_version(True)
+                parameters[1].enabled = False
             else:
                 # otherwise, pull up the list of installed versions
                 # and allow the user to select one to set.
                 r_versions = rtools.r_version_dictionary
-                if r_versions:
-                    parameters[1].filter.list = r_versions.keys()
-
+                parameters[1].filter.list = r_versions.keys()
         if validator:
             return validator(parameters).updateParameters()
 
