@@ -10,6 +10,7 @@ import errno
 import getpass
 import logging
 import os
+from .utils import platform
 
 try:
     import winreg
@@ -241,7 +242,11 @@ def r_reg_value(lookup_key='path'):
                                 if lookup_key == 'path':
                                     r_reg_value = version_path
                                 if lookup_key == 'dict':
-                                    r_reg_value[r_base_key] = version_path
+                                    # check that the versions have valid R DLLs.
+                                    rdll_path = os.path.join(version_path, 'bin',
+                                                             platform(), "R.dll")
+                                    if os.path.exists(rdll_path):
+                                        r_reg_value[r_base_key] = version_path
 
                                 r_version_info = winreg.QueryInfoKey(
                                     r_version_reg)
