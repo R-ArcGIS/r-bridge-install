@@ -271,9 +271,6 @@ def r_reg_write_value(r_key=None, r_value=None):
                    "SOFTWARE\\Wow6432Node\\R-Core\\R",
                    "SOFTWARE\\Wow6432Node\\R-Core\\R64"]
 
-    # keys to write
-    r_write_keys = ('InstallPath', 'Current Version')
-
     for (key_name, root_key) in list(root_keys.items()):
         for r_path in r_reg_paths:
             r_reg = None
@@ -291,7 +288,7 @@ def r_reg_write_value(r_key=None, r_value=None):
 
             if r_reg:
                 try:
-                    log.info('writing "{}" to "{}"'.format(r_key, r_value))
+                    log.info('setting "{}" to "{}"'.format(r_key, r_value))
                     winreg.SetValueEx(r_reg, r_key, 0,
                                       winreg.REG_SZ, r_value)
                 except fnf_exception as error:
