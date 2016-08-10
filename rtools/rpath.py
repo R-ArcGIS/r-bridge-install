@@ -311,8 +311,6 @@ def r_path():
     log.info("Final R install path: {}".format(r_install_path))
     return r_install_path
 
-r_install_path = r_path()
-
 
 def r_version(current_only=False):
     """Find current R version."""
@@ -321,21 +319,17 @@ def r_version(current_only=False):
     r_version = r_reg_value("Current Version")
 
     if not current_only and not r_version:
-        r_path_l = r_install_path
+        r_path_l = r_path()
         if r_path_l is not None:
             if '-' in r_path_l:
                 r_version = r_path_l.split('-')[1]
     return r_version
-
-r_version_info = r_version()
 
 
 def r_version_dict():
     """Find all versions of R in registry."""
     r_versions = r_reg_value("dict")
     return r_versions
-
-r_version_dictionary = r_version_dict()
 
 
 def r_all_lib_paths():
@@ -347,9 +341,9 @@ def r_all_lib_paths():
     if _environ_path("R_LIBS_USER"):
         libs_path.append(_environ_path("R_LIBS_USER"))
 
-    if r_version_info:
+    if r_version():
         # user's R library in Documents/R/win-library/R-x.x/
-        (r_major, r_minor, r_patch) = r_version_info.split(".")
+        (r_major, r_minor, r_patch) = r_version().split(".")
 
         r_user_library_path = os.path.join(
             _documents_folder(), "R", "win-library",
@@ -369,28 +363,24 @@ def r_all_lib_paths():
         libs_path.append(_environ_path("R_LIBS_SITE"))
 
     # R library in Program Files/R-x.xx/library
-    if r_install_path is not None:
+    if r_path() is not None:
         r_install_lib_path = os.path.join(
-            r_install_path, "library")
+            r_path(), "library")
 
         if os.path.exists(r_install_lib_path):
             libs_path.append(r_install_lib_path)
 
     return libs_path
 
-r_all_library_paths = r_all_lib_paths()
-
 
 def r_lib_path():
     """ Package library, locates the highest-priority
         library path used for R packages."""
     lib_path = None
-    all_libs = r_all_library_paths
+    all_libs = r_all_lib_paths()
     if len(all_libs) > 0:
         lib_path = all_libs[0]
     return lib_path
-
-r_library_path = r_lib_path()
 
 
 def r_pkg_path():
@@ -426,7 +416,7 @@ def r_pkg_path():
 
     # iterate over all known library path locations,
     # and check for our package in each.
-    for lib_path in r_all_library_paths:
+    for lib_path in r_all_lib_paths():
         possible_package_path = os.path.join(lib_path, package_name)
         if os.path.exists(possible_package_path):
             package_path = possible_package_path
@@ -443,8 +433,6 @@ def r_pkg_path():
             package_path = arc_package_dir
 
     return package_path
-
-r_package_path = r_pkg_path()
 
 
 def r_pkg_version():
@@ -463,8 +451,6 @@ def r_pkg_version():
                     if key == 'Version':
                         version = value_raw.strip()
     return version
-
-r_package_version = r_pkg_version()
 
 
 def arcmap_exists(version=None):
@@ -538,5 +524,3 @@ def arcmap_path(version=None):
                     handle_fnf(error)
 
     return arcmap_path
-
-arcmap_install_path = arcmap_path()

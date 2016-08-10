@@ -8,7 +8,7 @@ import subprocess
 import sys
 import arcpy
 
-from .rpath import r_install_path
+from .rpath import r_path
 from .utils import platform
 
 PY2 = sys.version_info[0] == 2
@@ -23,7 +23,7 @@ def execute_r(command='Rcmd', *args):
 
         rcommand_exe = "{}.exe".format(command)
         rcommand_path = os.path.join(
-            r_install_path, 'bin', platform(), rcommand_exe)
+            r_path(), 'bin', platform(), rcommand_exe)
         rcommand_dir = os.path.dirname(rcommand_path)
         # Change directory prior to execution, have a user who continuously
         # gets "'C:\Program' is not recognized as an internal or external
@@ -80,7 +80,7 @@ def path_exists(path):
 
 
 def r_install_valid():
-    valid = path_exists(r_install_path)
+    valid = path_exists(r_path())
     if not valid:
         arcpy.AddError("Unable to find valid R installation. Please install R.")
     return valid
