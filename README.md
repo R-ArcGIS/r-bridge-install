@@ -49,8 +49,8 @@ If everything worked, you should be ready to start! See [Next Steps](#next-steps
 ###Offline Installation
  - From a machine that does have internet access:
    + [download this repository](https://github.com/R-ArcGIS/r-bridge-install/archive/master.zip).
-   + download the [latest version of the arcgisbinding package](https://github.com/R-ArcGIS/r-bridge/releases/latest). As of writing, this is `arcgisbinding_1.0.0.118.zip`.
- - Copy both zip files onto the machine that you're targeting offline installation. Extract the r-bridge-install zip. Place the `arcgisbinding_1.0.0.118.zip` into the same directory as the "R Integration" Python toolbox.
+   + download the [latest version of the arcgisbinding package](https://github.com/R-ArcGIS/r-bridge/releases/latest). As of writing, this is `arcgisbinding_1.0.0.122.zip`.
+ - Copy both zip files onto the machine that you're targeting offline installation. Extract the r-bridge-install zip. Place the `arcgisbinding_1.0.0.122.zip` into the same directory as the "R Integration" Python toolbox.
  - Run the installation procedure as listed above.
 
 ###Problems Installing?

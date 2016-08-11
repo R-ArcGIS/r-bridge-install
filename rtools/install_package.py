@@ -26,6 +26,7 @@ from .bootstrap_r import execute_r
 from .github_release import save_url, release_info
 from .rpath import (
     r_lib_path,
+    r_path,
     r_pkg_path,
     r_pkg_version,
     r_version,
@@ -212,6 +213,14 @@ def install_package(overwrite=False, r_library_path=r_lib_path()):
         local_install = False
         zip_name = os.path.basename(download_url)
 
+    # check for a network-based R installation
+    if r_path()[0:2] == r'\\':
+        arcpy.AddMessage(
+            "R installed on a network path, using fallback installation method.")
+        r_local_install = False
+    else:
+        r_local_install = True
+
     # we have a release, write it to disk for installation
     with mkdtemp() as temp_dir:
         package_path = os.path.join(temp_dir, zip_name)
@@ -223,7 +232,19 @@ def install_package(overwrite=False, r_library_path=r_lib_path()):
         if os.path.exists(package_path):
             # TODO -- need to do UAC escalation here?
             # call the R installation script
-            execute_r('Rcmd', 'INSTALL', package_path)
+            rcmd_return = 0
+            if r_local_install:
+                rcmd_return = execute_r('Rcmd', 'INSTALL', package_path)
+            if not r_local_install or rcmd_return != 0:
+                # Can't execute Rcmd in this context, write out a temporary
+                # script and run install.packages() from within an R session.
+                install_script = os.path.join(temp_dir, 'install.R')
+                with open(install_script, 'w') as f:
+                    f.write("install.packages(\"{}\", repos=NULL)".format(
+                        package_path.replace("\\", "/")))
+                rcmd_return = execute_r("Rscript", install_script)
+                if rcmd_return != 0:
+                    arcpy.AddWarning("Fallback installation method failed.")
         else:
             arcpy.AddError("No package found at {}".format(package_path))
             return
