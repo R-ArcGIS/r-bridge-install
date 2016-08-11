@@ -10,6 +10,7 @@ import errno
 import getpass
 import logging
 import os
+from .utils import platform
 
 try:
     import winreg
@@ -22,6 +23,9 @@ log = logging.getLogger(__name__)
 # cyptes constants
 CSIDL_PROFILE = 40
 SHGFP_TYPE_CURRENT = 0
+
+READ_ACCESS = (winreg.KEY_WOW64_64KEY + winreg.KEY_READ)
+FULL_ACCESS = (winreg.KEY_WOW64_64KEY + winreg.KEY_ALL_ACCESS)
 
 
 # TODO re-intergrate this.
@@ -54,8 +58,7 @@ def log_exception(err):
        only log the results."""
 
     # enc = locale.getpreferredencoding() or 'ascii'
-    log.debug("Exception generated:")
-    log.debug(err)
+    log.debug("Exception generated: {}".format(err))
     # log.debug(error.encode(enc, 'ignore').decode('utf-8')))
 
 
@@ -93,10 +96,9 @@ def _user_sids():
     reg_path = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList"
 
     try:
-        log.info("OpenKey on {}, with READ + WOW64\n".format(reg_path))
+        log.info("OpenKey on {}, with READ + WOW64".format(reg_path))
         sid_reg = winreg.OpenKey(root_key, reg_path,
-                                 0, (winreg.KEY_WOW64_64KEY +
-                                     winreg.KEY_READ))
+                                 0, READ_ACCESS)
 
     except fnf_exception as error:
         handle_fnf(error)
@@ -112,8 +114,7 @@ def _user_sids():
                 profile_path_key = "{}\\{}".format(reg_path, sid)
                 try:
                     profile_path_reg = winreg.OpenKey(
-                        root_key, profile_path_key, 0,
-                        (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+                        root_key, profile_path_key, 0, READ_ACCESS)
 
                     profile_path = winreg.QueryValueEx(
                         profile_path_reg, "ProfileImagePath")[0]
@@ -134,9 +135,7 @@ def _user_hive(username=None):
         sid = sids[username]
         root_key = winreg.HKEY_USERS
         try:
-            hive_reg = winreg.OpenKey(root_key, sid,
-                                      0, (winreg.KEY_WOW64_64KEY +
-                                          winreg.KEY_READ))
+            hive_reg = winreg.OpenKey(root_key, sid, 0, READ_ACCESS)
             if hive_reg:
                 hive_base = sid
         except:
@@ -155,9 +154,15 @@ def _environ_path(var=None):
     return path
 
 
-def r_path():
-    """Find R installation path from registry."""
-    r_install_path = None
+def r_reg_value(lookup_key='path'):
+    """Find R related registry values."""
+
+    lookup_keys = ['InstallPath', 'Current Version', 'dict']
+    if lookup_key not in lookup_keys:
+        log.warn("Looking up invalid key {}".format(lookup_key))
+        return None
+
+    r_reg_value = None
 
     # set an epoch for a Windows FILETIME object
     epoch = datetime.datetime(1601, 1, 1)
@@ -168,6 +173,7 @@ def r_path():
         ('HKCU', winreg.HKEY_CURRENT_USER),
         ('HKLM', winreg.HKEY_LOCAL_MACHINE),
     ))
+    # only work with the R and R64 hives, ArcGIS doesn't examine R32
     r_reg_paths = ["SOFTWARE\\R-core\\R",
                    "SOFTWARE\\R-core\\R64",
                    "SOFTWARE\\Wow6432Node\\R-Core\\R",
@@ -178,16 +184,13 @@ def r_path():
             r_reg = None
 
             try:
-                log.info("OpenKey on {}, with READ + WOW64\n".format(
-                    r_path))
+                log.info("OpenKey on {}, with READ + WOW64".format(r_path))
                 # HKU hive should be prepended to search
                 if key_name is 'HKU':
                     r_path = "{}\\{}".format(
                         _user_hive(getpass.getuser()), r_path)
 
-                r_reg = winreg.OpenKey(root_key, r_path,
-                                       0, (winreg.KEY_WOW64_64KEY +
-                                           winreg.KEY_READ))
+                r_reg = winreg.OpenKey(root_key, r_path, 0, READ_ACCESS)
             except fnf_exception as error:
                 handle_fnf(error)
 
@@ -195,17 +198,22 @@ def r_path():
                 log.info("Successfully found {}".format(r_path))
 
                 try:
-                    log.info("Looking for InstallPath.")
-                    r_install_path = winreg.QueryValueEx(r_reg, "InstallPath")[0]
+                    log.info("Looking for {}.".format(lookup_key))
+                    r_reg_value = winreg.QueryValueEx(r_reg, lookup_key)[0]
                 except fnf_exception as error:
                     handle_fnf(error)
 
-                if not r_install_path:
-                    log.debug("Top-level install path not defined. " +
+                if not r_reg_value:
+                    log.debug("Top-level value not defined. " +
                               "Checking version-specific locations.")
                     # Can't find the install path as a top-level value.
                     # Inspect the children keys for versions, and use the most
                     # recently installed one as the correct R installation.
+
+                    if lookup_key == 'dict':
+                        # version: install path
+                        r_reg_value = {}
+
                     max_time = epoch
                     try:
                         subkey_count = winreg.QueryInfoKey(r_reg)[0]
@@ -217,36 +225,116 @@ def r_path():
                             log.info("checking EnumKey pos {}".format(pos))
                             r_base_key = winreg.EnumKey(r_reg, pos)
 
-                            # test for the right path based on age
                             if r_base_key:
+                                # in the case that we've asked for dict,
+                                # return all instances of desired key
+                                if lookup_key == 'dict':
+                                    r_reg_value[r_base_key] = None
+
                                 r_version_key = "{}\\{}".format(
                                     r_path, r_base_key)
                                 r_version_reg = winreg.OpenKey(
                                     root_key, r_version_key, 0,
-                                    (winreg.KEY_READ |
-                                     winreg.KEY_WOW64_64KEY))
-                                r_install_path = winreg.QueryValueEx(
+                                    READ_ACCESS)
+
+                                version_path = winreg.QueryValueEx(
                                     r_version_reg, "InstallPath")[0]
+                                if lookup_key == 'path':
+                                    r_reg_value = version_path
+                                if lookup_key == 'dict':
+                                    # check that the versions have valid R DLLs.
+                                    rdll_path = os.path.join(version_path, 'bin',
+                                                             platform(), "R.dll")
+                                    if os.path.exists(rdll_path):
+                                        r_reg_value[r_base_key] = version_path
+
                                 r_version_info = winreg.QueryInfoKey(
                                     r_version_reg)
                                 r_install_time = epoch + datetime.timedelta(
                                     microseconds=r_version_info[2]/10)
                                 if max_time < r_install_time:
                                     max_time = r_install_time
+    return r_reg_value
+
+
+def r_reg_write_value(r_key=None, r_value=None):
+    """Write R registry values."""
+    # keys to write
+    r_write_keys = ('InstallPath', 'Current Version')
+    if r_key not in r_write_keys:
+        log.warn("asked to write an invalid key, {}".format(r_key))
+        return None
+
+    root_keys = OrderedDict((
+        # try HKLM, then HKCU
+        ('HKLM', winreg.HKEY_LOCAL_MACHINE),
+        ('HKCU', winreg.HKEY_CURRENT_USER)
+    ))
+    # only work with the R and R64 hives, ArcGIS doesn't examine R32
+    r_reg_paths = ["SOFTWARE\\R-core\\R",
+                   "SOFTWARE\\R-core\\R64",
+                   "SOFTWARE\\Wow6432Node\\R-Core\\R",
+                   "SOFTWARE\\Wow6432Node\\R-Core\\R64"]
+
+    for (key_name, root_key) in list(root_keys.items()):
+        for r_path in r_reg_paths:
+            r_reg = None
+
+            try:
+                log.info("CreateKeyEx on {}\\{}, with write".format(
+                    key_name, r_path))
+                # HKU hive should be prepended to search
+                if key_name is 'HKU':
+                    r_path = "{}\\{}".format(
+                        _user_hive(getpass.getuser()), r_path)
+                r_reg = winreg.CreateKeyEx(root_key, r_path, 0, FULL_ACCESS)
+            except fnf_exception as error:
+                handle_fnf(error)
+
+            if r_reg:
+                try:
+                    log.info('setting "{}" to "{}"'.format(r_key, r_value))
+                    winreg.SetValueEx(r_reg, r_key, 0,
+                                      winreg.REG_SZ, r_value)
+                except fnf_exception as error:
+                    handle_fnf(error)
+
+
+def r_set_install(install_path=None, current_version=None):
+    """Set default install for R."""
+    if install_path:
+        log.info("writing 'InstallPath' value {}".format(install_path))
+        r_reg_write_value("InstallPath", install_path)
+    if current_version:
+        log.info("writing 'Current Version' value {}".format(current_version))
+        r_reg_write_value("Current Version", current_version)
+
+
+def r_path():
+    """Find R installation path from registry."""
+    r_install_path = r_reg_value("InstallPath")
     log.info("Final R install path: {}".format(r_install_path))
     return r_install_path
 
-r_install_path = r_path()
 
+def r_version(current_only=False):
+    """Find current R version."""
 
-def r_version():
-    r_version = None
-    r_path_l = r_install_path
-    if r_path_l is not None:
-        r_version = r_path_l.split('-')[1]
+    # first try the registry
+    r_version = r_reg_value("Current Version")
+
+    if not current_only and not r_version:
+        r_path_l = r_path()
+        if r_path_l is not None:
+            if '-' in r_path_l:
+                r_version = r_path_l.split('-')[1]
     return r_version
 
-r_version_info = r_version()
+
+def r_version_dict():
+    """Find all versions of R in registry."""
+    r_versions = r_reg_value("dict")
+    return r_versions
 
 
 def r_all_lib_paths():
@@ -258,9 +346,9 @@ def r_all_lib_paths():
     if _environ_path("R_LIBS_USER"):
         libs_path.append(_environ_path("R_LIBS_USER"))
 
-    if r_version_info:
+    if r_version():
         # user's R library in Documents/R/win-library/R-x.x/
-        (r_major, r_minor, r_patch) = r_version_info.split(".")
+        (r_major, r_minor, r_patch) = r_version().split(".")
 
         r_user_library_path = os.path.join(
             _documents_folder(), "R", "win-library",
@@ -280,28 +368,24 @@ def r_all_lib_paths():
         libs_path.append(_environ_path("R_LIBS_SITE"))
 
     # R library in Program Files/R-x.xx/library
-    if r_install_path is not None:
+    if r_path() is not None:
         r_install_lib_path = os.path.join(
-            r_install_path, "library")
+            r_path(), "library")
 
         if os.path.exists(r_install_lib_path):
             libs_path.append(r_install_lib_path)
 
     return libs_path
 
-r_all_library_paths = r_all_lib_paths()
-
 
 def r_lib_path():
     """ Package library, locates the highest-priority
         library path used for R packages."""
     lib_path = None
-    all_libs = r_all_library_paths
+    all_libs = r_all_lib_paths()
     if len(all_libs) > 0:
         lib_path = all_libs[0]
     return lib_path
-
-r_library_path = r_lib_path()
 
 
 def r_pkg_path():
@@ -321,9 +405,7 @@ def r_pkg_path():
 
     try:
         # find the key, 64- or 32-bit we want it all
-        pro_reg = winreg.OpenKey(
-            root_key, reg_path, 0,
-            (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+        pro_reg = winreg.OpenKey(root_key, reg_path, 0, READ_ACCESS)
     except fnf_exception as error:
         handle_fnf(error)
 
@@ -339,7 +421,7 @@ def r_pkg_path():
 
     # iterate over all known library path locations,
     # and check for our package in each.
-    for lib_path in r_all_library_paths:
+    for lib_path in r_all_lib_paths():
         possible_package_path = os.path.join(lib_path, package_name)
         if os.path.exists(possible_package_path):
             package_path = possible_package_path
@@ -356,8 +438,6 @@ def r_pkg_path():
             package_path = arc_package_dir
 
     return package_path
-
-r_package_path = r_pkg_path()
 
 
 def r_pkg_version():
@@ -376,8 +456,6 @@ def r_pkg_version():
                     if key == 'Version':
                         version = value_raw.strip()
     return version
-
-r_package_version = r_pkg_version()
 
 
 def arcmap_exists(version=None):
@@ -399,9 +477,7 @@ def arcmap_exists(version=None):
         arcmap_reg = None
         try:
             # find the key, 64- or 32-bit we want it all
-            arcmap_reg = winreg.OpenKey(
-                root_key, reg_path, 0,
-                (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+            arcmap_reg = winreg.OpenKey(root_key, reg_path, 0, READ_ACCESS)
         except fnf_exception as error:
             handle_fnf(error)
 
@@ -438,8 +514,7 @@ def arcmap_path(version=None):
             try:
                 # find the key, 64- or 32-bit we want it all
                 arcmap_reg = winreg.OpenKey(
-                    root_key, reg_path, 0,
-                    (winreg.KEY_READ | winreg.KEY_WOW64_64KEY))
+                    root_key, reg_path, 0, READ_ACCESS)
             except fnf_exception as error:
                 handle_fnf(error)
 
@@ -454,5 +529,3 @@ def arcmap_path(version=None):
                     handle_fnf(error)
 
     return arcmap_path
-
-arcmap_install_path = arcmap_path()

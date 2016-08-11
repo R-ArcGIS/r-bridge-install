@@ -25,13 +25,13 @@ except ImportError:
 from .bootstrap_r import execute_r
 from .github_release import save_url, release_info
 from .rpath import (
-    r_install_path,
-    r_library_path,
+    r_lib_path,
+    r_path,
     r_pkg_path,
     r_pkg_version,
-    r_version_info,
+    r_version,
     arcmap_exists,
-    arcmap_install_path,
+    arcmap_path,
     fnf_exception,
     handle_fnf,
 )
@@ -96,7 +96,8 @@ def validate_environment(overwrite=None):
         valid_env = False
 
     if not overwrite and PACKAGE_VERSION:
-        msg = "The ArcGIS R bridge is installed, and overwrite is disabled."
+        msg = "The ArcGIS R bridge is already installed, and " + \
+             "overwrite is disabled."
         valid_env = False
 
     # check the library isn't loaded
@@ -132,14 +133,14 @@ def create_registry_entry(product, arc_version):
     if link_key:
         try:
             arcpy.AddMessage("Using registry key to link install.")
-            binding_path = "{}\\{}".format(r_library_path, "arcgisbinding")
+            binding_path = "{}\\{}".format(r_lib_path(), "arcgisbinding")
             winreg.SetValueEx(link_key, package_key, 0,
                               winreg.REG_SZ, binding_path)
         except fnf_exception as error:
             handle_fnf(error)
 
 
-def install_package(overwrite=False, r_library_path=r_library_path):
+def install_package(overwrite=False, r_library_path=r_lib_path()):
     """Install ArcGIS R bindings onto this machine."""
     if overwrite is True:
         overwrite = True
@@ -156,7 +157,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     if product == 'Pro' and arcmap_exists("10.3"):
         arcmap_needs_link = True
         msg_base = "Pro side by side with 10.3 detected,"
-        if arcmap_install_path is not None:
+        if arcmap_path() is not None:
             msg = "{} installing bridge for both environments.".format(msg_base)
             arcpy.AddMessage(msg)
         else:
@@ -167,7 +168,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
     # if we're going to install the bridge in 10.3.1, create the appropriate
     # directory before trying to install.
     if arc_version == '10.3.1' and product == 'ArcMap' or arcmap_needs_link:
-        r_integration_dir = os.path.join(arcmap_install_path, "Rintegration")
+        r_integration_dir = os.path.join(arcmap_path(), "Rintegration")
         # TODO escalate privs here? test on non-admin user
         if not os.path.exists(r_integration_dir):
             try:
@@ -213,7 +214,7 @@ def install_package(overwrite=False, r_library_path=r_library_path):
         zip_name = os.path.basename(download_url)
 
     # check for a network-based R installation
-    if r_install_path[0:2] == r'\\':
+    if r_path()[0:2] == r'\\':
         arcpy.AddMessage(
             "R installed on a network path, using fallback installation method.")
         r_local_install = False
@@ -261,16 +262,17 @@ def install_package(overwrite=False, r_library_path=r_library_path):
             (arc_version in ('1.1', '1.1.1', '1.2')
              and product == 'Pro'):
 
-        (r_major, r_minor, r_patchlevel) = r_version_info.split(".")
-        # if we have a patchlevel like '4revised' or '3alpha', and
-        # the global library path is used, then use the registry key.
-        if len(r_patchlevel) > 1 and 'Program Files' in r_library_path:
-            # create_registry_entry(product, arc_version)
-            msg = "Currently, the bridge doesn't support patched releases" + \
-                  "  (e.g. 3.2.4 Revised) in a global install. Please use" + \
-                  " another version of R."
-            arcpy.AddError(msg)
-            return
+        if r_version():
+            (r_major, r_minor, r_patchlevel) = r_version().split(".")
+            # if we have a patchlevel like '4revised' or '3alpha', and
+            # the global library path is used, then use the registry key.
+            if len(r_patchlevel) > 1 and 'Program Files' in r_library_path:
+                # create_registry_entry(product, arc_version)
+                msg = ("Currently, the bridge doesn't support patched releases"
+                       " (e.g. 3.2.4 Revised) in a global install. Please use"
+                       " another version of R.")
+                arcpy.AddError(msg)
+                return
 
     # at 10.3.1, we _must_ have the bridge installed at the correct location.
     # create a symlink that connects back to the correct location on disk.
@@ -312,6 +314,6 @@ if __name__ == '__main__':
         overwrite = sys.argv[1]
     else:
         overwrite = None
-    print("library path: {}".format(r_library_path))
+    print("library path: {}".format(r_lib_path()))
 
-    install_package(overwrite=overwrite, r_library_path=r_library_path)
+    install_package(overwrite=overwrite, r_library_path=r_lib_path())

@@ -7,7 +7,7 @@ import arcpy
 
 from .github_release import release_info
 from .install_package import install_package, validate_environment
-from .rpath import r_library_path, r_pkg_version
+from .rpath import r_lib_path, r_pkg_version
 from .utils import versiontuple
 
 
@@ -21,7 +21,7 @@ def compare_release_versions():
     return newer_available
 
 
-def update_package(r_library_path=r_library_path):
+def update_package(r_library_path=r_lib_path()):
     """Update ArcGIS R bindings on this machine."""
 
     # check that we're in a sane installation environment
@@ -41,4 +41,4 @@ def update_package(r_library_path=r_library_path):
 
 # execute as standalone script, get parameters from sys.argv
 if __name__ == '__main__':
-    update_package(r_library_path=r_library_path)
+    update_package(r_library_path=r_lib_path())

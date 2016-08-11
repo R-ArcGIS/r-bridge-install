@@ -28,13 +28,31 @@ class UpdateBindings(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        return []
+        version = arcpy.Parameter()
+        version.name = 'r_version'
+        version.displayName = 'Selected R Version (Set As Default)'
+        version.parameterType = 'Required'
+        version.direction = 'Input'
+        version.datatype = 'GPString'
+
+        return [version]
 
     def isLicensed(self):
         return True
 
     def updateParameters(self, parameters):
         validator = getattr(self, 'ToolValidator', None)
+
+        if not parameters[0].altered:
+            # check the registry 'Current' version only
+            if rtools.r_version(True):
+                parameters[0].value = rtools.r_version(True)
+                parameters[0].enabled = False
+            else:
+                # otherwise, pull up the list of installed versions
+                # and allow the user to select one to set.
+                r_versions = rtools.r_version_dict()
+                parameters[0].filter.list = r_versions.keys()
         if validator:
             return validator(parameters).updateParameters()
 
@@ -44,6 +62,8 @@ class UpdateBindings(object):
             return validator(parameters).updateMessages()
 
     def execute(self, parameters, messages):
+        if parameters[0].enabled:
+            set_default_r(parameters[0].value)
         rtools.update_package()
 
 
@@ -71,7 +91,7 @@ class RVersion(object):
             return validator(parameters).updateMessages()
 
     def execute(self, parameters, messages):
-        rtools.r_version()
+        arcpy.AddMessage(rtools.r_version())
 
 
 class RInstallDetails(object):
@@ -101,7 +121,7 @@ class RInstallDetails(object):
         r_pkgs.datatype = 'GPString'
 
         # binding version
-        bind_ver= arcpy.Parameter()
+        bind_ver = arcpy.Parameter()
         bind_ver.name = 'bind_ver'
         bind_ver.displayName = 'ArcGIS binding version'
         bind_ver.parameterType = 'Derived'
@@ -109,7 +129,7 @@ class RInstallDetails(object):
         bind_ver.datatype = 'GPString'
 
         # binding path
-        bind_path= arcpy.Parameter()
+        bind_path = arcpy.Parameter()
         bind_path.name = 'bind_path'
         bind_path.displayName = 'ArcGIS binding path'
         bind_path.parameterType = 'Derived'
@@ -117,7 +137,6 @@ class RInstallDetails(object):
         bind_path.datatype = 'GPString'
 
         return [r_install, r_pkgs, bind_ver, bind_path]
-
 
     def isLicensed(self):
         return True
@@ -133,7 +152,7 @@ class RInstallDetails(object):
             return validator(parameters).updateMessages()
 
     def execute(self, parameters, messages):
-        if rtools.r_install_path is None:
+        if rtools.r_path() is None:
             arcpy.AddError(dedent("""\
                 R not installed. Please install R prior to using
                 this toolbox. The R installation can be found at:
@@ -141,18 +160,18 @@ class RInstallDetails(object):
                 """))
         else:
             arcpy.AddMessage("R (version {}), installed in: {}".format(
-                rtools.r_version_info, rtools.r_install_path))
-            parameters[0].value = rtools.r_install_path
+                rtools.r_version(), rtools.r_path()))
+            parameters[0].value = rtools.r_path()
 
             arcpy.AddMessage("R packages will be installed into: {}".format(
-                rtools.r_library_path))
-            parameters[1].value = rtools.r_library_path
+                rtools.r_lib_path()))
+            parameters[1].value = rtools.r_lib_path()
 
             arcpy.AddMessage("All R package libraries detected: {}".format(
-                ";".join(rtools.r_all_library_paths)))
+                ";".join(rtools.r_all_lib_paths())))
 
-            current_package_path = rtools.rpath.r_pkg_path()
-            current_package_version = rtools.rpath.r_pkg_version()
+            current_package_path = rtools.r_pkg_path()
+            current_package_version = rtools.r_pkg_version()
             if current_package_path is None or current_package_version is None:
                 arcpy.AddWarning("The ArcGIS R package is not installed."
                                  " Use the 'Install R Bindings' tool to "
@@ -163,6 +182,7 @@ class RInstallDetails(object):
                         current_package_version, current_package_path))
                 parameters[2].value = current_package_version
                 parameters[3].value = current_package_path
+
 
 class InstallBindings(object):
 
@@ -183,13 +203,31 @@ class InstallBindings(object):
         param_1.datatype = 'GPBoolean'
         param_1.value = False
 
-        return [param_1]
+        param_2 = arcpy.Parameter()
+        param_2.name = 'r_version'
+        param_2.displayName = 'Selected R Version (Set As Default)'
+        param_2.parameterType = 'Required'
+        param_2.direction = 'Input'
+        param_2.datatype = 'GPString'
+
+        return [param_1, param_2]
 
     def isLicensed(self):
         return True
 
     def updateParameters(self, parameters):
         validator = getattr(self, 'ToolValidator', None)
+
+        if not parameters[1].altered:
+            # check the registry 'Current' version only
+            if rtools.r_version(True):
+                parameters[1].value = rtools.r_version(True)
+                parameters[1].enabled = False
+            else:
+                # otherwise, pull up the list of installed versions
+                # and allow the user to select one to set.
+                r_versions = rtools.r_version_dict()
+                parameters[1].filter.list = r_versions.keys()
         if validator:
             return validator(parameters).updateParameters()
 
@@ -199,4 +237,20 @@ class InstallBindings(object):
             return validator(parameters).updateMessages()
 
     def execute(self, parameters, messages):
+        if parameters[1].enabled:
+            set_default_r(parameters[1].value)
         rtools.install_package(overwrite=parameters[0].value)
+
+
+def set_default_r(current_version):
+    """If the user doesn't have a default R configured,
+       they are asked to set one here in the tool. Update the related
+       registry keys as needed."""
+
+    arcpy.AddMessage("Updating default R to {}".format(current_version))
+
+    # get the related data for the version selected
+    install_path = rtools.r_version_dict()[current_version]
+    if install_path:
+        # insert the values into the registry
+        rtools.r_set_install(install_path, current_version)
