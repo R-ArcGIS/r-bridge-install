@@ -227,7 +227,12 @@ class InstallBindings(object):
                 # otherwise, pull up the list of installed versions
                 # and allow the user to select one to set.
                 r_versions = rtools.r_version_dict()
-                parameters[1].filter.list = r_versions.keys()
+                if r_versions:
+                    parameters[1].filter.list = r_versions.keys()
+                else:
+                    # can't find current version, nor recurse.
+                    # R probably isn't installed.
+                    parameters[1].enabled = False
         if validator:
             return validator(parameters).updateParameters()
 
