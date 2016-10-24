@@ -232,6 +232,7 @@ class InstallBindings(object):
                 else:
                     # can't find current version, nor recurse.
                     # R probably isn't installed.
+                    parameters[1].value = 'R not detected'
                     parameters[1].enabled = False
         if validator:
             return validator(parameters).updateParameters()
