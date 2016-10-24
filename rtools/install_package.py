@@ -214,7 +214,7 @@ def install_package(overwrite=False, r_library_path=r_lib_path()):
         zip_name = os.path.basename(download_url)
 
     # check for a network-based R installation
-    if r_path and r_path()[0:2] == r'\\':
+    if r_path() and r_path()[0:2] == r'\\':
         arcpy.AddMessage(
             "R installed on a network path, using fallback installation method.")
         r_local_install = False
