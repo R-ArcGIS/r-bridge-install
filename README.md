@@ -74,7 +74,7 @@ Want to use tools others have developed?
  - Check out the community page for more tools _Coming Soon_
 
 Want to develop new tools using R?
- - Develop new R-based tools using the R package `arcgisbinding`, which is described in the [bridge repository](https://github.com/R-ArcGIS/r-bridge) and the [package documentation](https://r-arcgis.github.io/assets/arcgisbinding.pdf)
+ - Develop new R-based tools using the R package `arcgisbinding`, which is described in the [package vignette](https://r-arcgis.github.io/assets/arcgisbinding-vignette.html). There are additional resources within the [bridge repository](https://github.com/R-ArcGIS/r-bridge) and the [package documentation](https://r-arcgis.github.io/assets/arcgisbinding.pdf).
 
 Credits
 -------
