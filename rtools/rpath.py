@@ -390,6 +390,7 @@ def r_all_lib_paths():
         if os.path.exists(r_install_lib_path):
             libs_path.append(r_install_lib_path)
 
+    libs_path = [os.path.normpath(p) for p in libs_path]
     return libs_path
 
 
