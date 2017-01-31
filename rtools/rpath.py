@@ -311,8 +311,17 @@ def r_set_install(install_path=None, current_version=None):
 
 
 def r_path():
-    """Find R installation path from registry."""
-    r_install_path = r_reg_value("InstallPath")
+    """Find R installation path."""
+    # on some systems, R_HOME is set -- use it first.
+    r_install_path = None
+    r_home = _environ_path("R_HOME")
+    if r_home:
+        r_home_bin_path = os.path.join(r_home, "bin")
+        if os.path.exists(r_home_bin_path):
+            r_install_path = r_home
+
+    if not r_install_path:
+        r_install_path = r_reg_value("InstallPath")
     log.info("Final R install path: {}".format(r_install_path))
     return r_install_path
 
@@ -366,6 +375,12 @@ def r_all_lib_paths():
 
     if _environ_path("R_LIBS_SITE"):
         libs_path.append(_environ_path("R_LIBS_SITE"))
+
+    if _environ_path("R_HOME"):
+        r_home = _environ_path("R_HOME")
+        r_home_lib_path = os.path.join(r_home, "library")
+        if os.path.exists(r_home_lib_path):
+            libs_path.append(r_home_lib_path)
 
     # R library in Program Files/R-x.xx/library
     if r_path() is not None:
