@@ -348,7 +348,7 @@ def r_all_lib_paths():
 
     if r_version():
         # user's R library in Documents/R/win-library/R-x.x/
-        (r_major, r_minor, r_patch) = r_version().split(".")
+        (r_major, r_minor, r_patch) = r_version().split(".")[0:3]
 
         r_user_library_path = os.path.join(
             _documents_folder(), "R", "win-library",
