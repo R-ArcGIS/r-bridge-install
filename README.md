@@ -3,7 +3,7 @@ Install the R ArcGIS Tools
 
 Install and update the R ArcGIS Bridge with this Python toolbox.
 
-**NOTE**: This release is a beta, and under active development. If you encounter problems, please [create an issue](https://github.com/R-ArcGIS/r-bridge-install/issues) so that we can take a look.
+**NOTE**: If you encounter problems, please [create an issue](https://github.com/R-ArcGIS/r-bridge-install/issues) so that we can take a look.
 
 
 Prerequisites
