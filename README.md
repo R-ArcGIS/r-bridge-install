@@ -1,5 +1,5 @@
-Install the R ArcGIS Tools
-==========================
+Install the R-ArcGIS Bridge
+===========================
 
 Install and update the R-ArcGIS bridge with this Python toolbox.
 
