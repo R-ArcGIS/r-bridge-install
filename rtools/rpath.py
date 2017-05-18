@@ -277,28 +277,33 @@ def r_reg_write_value(r_key=None, r_value=None):
                    "SOFTWARE\\Wow6432Node\\R-Core\\R64"]
 
     for (key_name, root_key) in list(root_keys.items()):
+        wrote = False
         for r_path in r_reg_paths:
             r_reg = None
 
             try:
                 log.info("CreateKeyEx on {}\\{}, with write".format(
                     key_name, r_path))
-                # HKU hive should be prepended to search
-                if key_name is 'HKU':
-                    r_path = "{}\\{}".format(
-                        _user_hive(getpass.getuser()), r_path)
                 r_reg = winreg.CreateKeyEx(root_key, r_path, 0, FULL_ACCESS)
-            except fnf_exception as error:
-                handle_fnf(error)
+            except WindowsError as error:
+                if error.errno == errno.ENOENT:
+                    pass
+                # permission denied, skip
+                if error.errno == errno.EACCES:
+                    log.debug("permission denied.")
+                    continue
 
             if r_reg:
                 try:
                     log.info('setting "{}" to "{}"'.format(r_key, r_value))
                     winreg.SetValueEx(r_reg, r_key, 0,
                                       winreg.REG_SZ, r_value)
+                    wrote = True
                 except fnf_exception as error:
                     handle_fnf(error)
-
+        # only enter the keys into one hive
+        if wrote:
+            break
 
 def r_set_install(install_path=None, current_version=None):
     """Set default install for R."""
