@@ -372,15 +372,9 @@ def r_all_lib_paths():
     if _environ_path("R_LIBS_USER"):
         libs_path.append(_environ_path("R_LIBS_USER"))
 
-    if r_version():
-        # user's R library in Documents/R/win-library/R-x.x/
-        (r_major, r_minor, r_patch) = r_version().split(".")[0:3]
-
-        r_user_library_path = os.path.join(
-            _documents_folder(), "R", "win-library",
-            "{}.{}".format(r_major, r_minor))
-        if os.path.exists(r_user_library_path):
-            libs_path.append(r_user_library_path)
+    r_user_library_path = r_user_lib_path()
+    if os.path.exists(r_user_library_path):
+        libs_path.append(r_user_library_path)
 
     # Next, check the value of R_LIBS -- users may set this
     # instead of the (more specific) R_LIBS_USER
