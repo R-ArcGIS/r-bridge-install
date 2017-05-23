@@ -29,6 +29,7 @@ from .rpath import (
     r_path,
     r_pkg_path,
     r_pkg_version,
+    r_user_lib_path,
     r_version,
     arcmap_exists,
     arcmap_path,
@@ -236,6 +237,14 @@ def install_package(overwrite=False, r_library_path=r_lib_path()):
             if r_local_install:
                 rcmd_return = execute_r('Rcmd', 'INSTALL', package_path)
             if not r_local_install or rcmd_return != 0:
+                # if we don't have a per-user library, create one
+                r_user_lib = r_user_lib_path()
+                if not os.path.exists(r_user_lib):
+                    try:
+                        arcpy.AddMessage("Creating per-user library directory")
+                        os.makedirs(r_user_lib)
+                    except OSError:
+                        arcpy.AddWarning("Failed to create per-user library.")
                 # Can't execute Rcmd in this context, write out a temporary
                 # script and run install.packages() from within an R session.
                 install_script = os.path.join(temp_dir, 'install.R')
