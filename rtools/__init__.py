@@ -10,6 +10,7 @@ from .rpath import (
     r_pkg_path,
     r_pkg_version,
     r_lib_path,
+    r_user_lib_path,
     r_all_lib_paths,
 )
 from .bootstrap_r import execute_r
