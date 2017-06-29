@@ -84,32 +84,39 @@ def validate_environment(overwrite=None):
     # earlier versions excluded by virtue of not having Python toolbox support
     no_hook_versions = ('10.1', '10.2', '10.2.1', '10.2.2', '10.3')
     valid_env = True
-    msg = None
+    msg = []
     if arc_version in no_hook_versions and product is not 'Pro':
-        msg = "The ArcGIS R bridge requires ArcGIS 10.3.1 or later."
+        msg.append("The ArcGIS R bridge requires ArcGIS 10.3.1 or later.")
         valid_env = False
 
     if arc_version in ('1.0', '1.0.2') and product == 'Pro':
-        msg = "The ArcGIS R bridge requires ArcGIS Pro 1.1 or later."
+        msg.append("The ArcGIS R bridge requires ArcGIS Pro 1.1 or later.")
         valid_env = False
 
     if not overwrite and PACKAGE_VERSION:
-        msg = "The ArcGIS R bridge is already installed, and " + \
-             "overwrite is disabled."
+        msg.append("The ArcGIS R bridge is already installed, and " 
+             "overwrite is disabled.")
+        valid_env = False
+
+    if kdll is None:
+        msg.append("Unable to connect to your Windows configuration, "
+              "this is likely due to an incorrect Python installation. "
+              "Try repairing your ArcGIS installation.")
         valid_env = False
 
     # check the library isn't loaded
-    if bridge_running(product):
-        msg = "The ArcGIS R bridge is currently in-use, restart the " + \
-              "application and try again."
+    if kdll is not None and bridge_running(product):
+        msg.append("The ArcGIS R bridge is currently in-use, restart the "
+              "application and try again.")
         valid_env = False
 
     if r_version() is None:
-        arcpy.AddError("It doesn't look like R is installed. Install R prior to running this tool.")
+        msg.append("It doesn't look like R is installed. Install R prior "
+                   "to running this tool.")
         valid_env = False
 
     if not valid_env:
-        arcpy.AddError(msg)
+        arcpy.AddError("\n\n".join(msg))
         sys.exit()
 
 
