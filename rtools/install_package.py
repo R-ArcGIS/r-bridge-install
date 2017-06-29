@@ -14,13 +14,10 @@ import sys
 try:
     import ctypes
     from ctypes import wintypes
-    kdll = ctypes.windll.LoadLibrary("kernel32.dll")
-except ImportError:
-    msg = "Unable to connect to your Windows configuration, " + \
-          "this is likely due to an incorrect Python installation. " + \
-          "Try repairing your ArcGIS installation."
-    arcpy.AddError(msg)
-    sys.exit()
+    # pass str() to avoid bpo29082 in Python 2.7.13
+    kdll = ctypes.windll.LoadLibrary(str("kernel32.dll"))
+except (ImportError, TypeError):
+    kdll = None
 
 from .bootstrap_r import execute_r
 from .github_release import save_url, release_info
