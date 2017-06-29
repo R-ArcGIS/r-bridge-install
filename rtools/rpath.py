@@ -305,6 +305,7 @@ def r_reg_write_value(r_key=None, r_value=None):
         if wrote:
             break
 
+
 def r_set_install(install_path=None, current_version=None):
     """Set default install for R."""
     if install_path:
@@ -373,7 +374,7 @@ def r_all_lib_paths():
         libs_path.append(_environ_path("R_LIBS_USER"))
 
     r_user_library_path = r_user_lib_path()
-    if os.path.exists(r_user_library_path):
+    if r_user_library_path is not None and os.path.exists(r_user_library_path):
         libs_path.append(r_user_library_path)
 
     # Next, check the value of R_LIBS -- users may set this
