@@ -107,6 +107,10 @@ def validate_environment(overwrite=None):
               "application and try again."
         valid_env = False
 
+    if r_version() is None:
+        arcpy.AddError("It doesn't look like R is installed. Install R prior to running this tool.")
+        valid_env = False
+
     if not valid_env:
         arcpy.AddError(msg)
         sys.exit()
