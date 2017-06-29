@@ -91,7 +91,14 @@ class RVersion(object):
             return validator(parameters).updateMessages()
 
     def execute(self, parameters, messages):
-        arcpy.AddMessage(rtools.r_version())
+        if rtools.r_version() is None:
+            arcpy.AddError(dedent("""\
+                R not installed. Please install R prior to using
+                this toolbox. The R installation can be found at:
+                  http://www.r-project.org/
+                """))
+        else:
+            arcpy.AddMessage(rtools.r_version())
 
 
 class RInstallDetails(object):
