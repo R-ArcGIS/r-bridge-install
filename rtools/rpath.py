@@ -253,7 +253,7 @@ def r_reg_value(lookup_key='path'):
                                 r_version_info = winreg.QueryInfoKey(
                                     r_version_reg)
                                 r_install_time = epoch + datetime.timedelta(
-                                    microseconds=r_version_info[2]/10)
+                                    microseconds=r_version_info[2] / 10)
                                 if max_time < r_install_time:
                                     max_time = r_install_time
     return r_reg_value
