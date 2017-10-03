@@ -19,6 +19,7 @@ try:
 except ImportError:
     # py 2
     import _winreg as winreg
+    str = unicode
 
 log = logging.getLogger(__name__)
 
