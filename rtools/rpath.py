@@ -8,6 +8,7 @@ import ctypes.wintypes
 import datetime
 import errno
 import getpass
+import locale
 import logging
 import os
 from .utils import platform
@@ -39,6 +40,7 @@ def ignored(*exceptions):
     except exceptions:
         pass
 
+
 fnf_exception = getattr(__builtins__,
                         'FileNotFoundError', WindowsError)
 
@@ -57,9 +59,9 @@ def log_exception(err):
        crash in the exception despite our intent to
        only log the results."""
 
-    # enc = locale.getpreferredencoding() or 'ascii'
-    log.debug("Exception generated: {}".format(err))
-    # log.debug(error.encode(enc, 'ignore').decode('utf-8')))
+    enc = locale.getpreferredencoding() or 'ascii'
+    exception_text = str(err).encode(enc, 'ignore').decode('utf-8')
+    log.debug("Exception generated: {}".format(exception_text))
 
 
 def _documents_folder():
