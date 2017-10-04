@@ -62,8 +62,7 @@ def log_exception(err):
        only log the results."""
 
     enc = locale.getpreferredencoding() or 'ascii'
-    exception_text = str(err).encode(enc, 'ignore').decode('utf-8')
-    log.debug("Exception generated: {}".format(exception_text))
+    log.debug("Exception generated: {}".format(str(err).decode(enc, 'ignore')))
 
 
 def _documents_folder():
