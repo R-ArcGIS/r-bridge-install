@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import arcpy
 import json
+import time
 try:
     import urllib.request as request
 except ImportError:
@@ -19,11 +20,16 @@ latest_url = '{API_URL}/repos/{org}/{project}/releases/latest'.format(
 def save_url(url, output_path):
     """Save a URL to disk."""
     valid_types = ['application/zip', 'application/octet-stream']
-    try:
-        r = request.urlopen(url)
-    except request.HTTPError as e:
-        arcpy.AddError("Unable to access '{}', {}.".format(
-            url, e.reason))
+    for _ in range(5):
+        try:
+            r = request.urlopen(url)
+            break
+        except request.HTTPError as e:
+            arcpy.AddError("Unable to access '{}', {}.".format(
+                url, e.reason))
+        except request.URLError as e:
+            # retry all URLErrors
+            time.sleep(3)
 
     if r.headers['content-type'] in valid_types and r.code == 200:
         arcpy.AddMessage("Saving URL to '{}'".format(output_path))
@@ -39,21 +45,26 @@ def parse_json_url(url):
     """Parse and return a JSON response from a URL."""
     res = None
     r = None
-    try:
-        r = request.urlopen(url)
-        if r.code == 200:
-            # urllib doesn't know bytestreams
-            str_response = r.read().decode('utf-8')
-            res = json.loads(str_response)
-        else:
-            msg = "Unable to access'{}', invalid response.".format(url)
-            arcpy.AddWarning(msg)
-    except request.URLError as e:
-        arcpy.AddWarning("Unable to access'{}', error: {}.".format(
-            url, e.reason))
-    except LookupError as e:
-        arcpy.AddWarning("Unable to access'{}', lookup error: {}.".format(
-            url, e.reason))
+    err_msg = None
+    for _ in range(5):
+        try:
+            r = request.urlopen(url)
+            if r.code == 200:
+                # urllib doesn't know bytestreams
+                str_response = r.read().decode('utf-8')
+                res = json.loads(str_response)
+                break
+            else:
+                err_msg = "Unable to access'{}', invalid response.".format(url)
+        except request.URLError as e:
+            err_msg = "Unable to access'{}', error: {}.".format(url, e.reason)
+        except LookupError as e:
+            err_msg = "Unable to access'{}', lookup error: {}.".format(
+                      url, e.reason)
+        time.sleep(3)
+
+    if err_msg:
+        arcpy.AddWarning(err_msg)
 
     return res
 
