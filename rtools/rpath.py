@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 from contextlib import contextmanager
 from collections import OrderedDict
+from sys import version_info
 import ctypes.wintypes
 import datetime
 import errno
@@ -14,10 +15,14 @@ import logging
 import os
 from .utils import platform
 
-try:
+if version_info[0] < 3:
+    PYVER = 2
+else:
+    PYVER = 3
+
+if PYVER > 2:
     import winreg
-except ImportError:
-    # py 2
+else:
     import _winreg as winreg
     str = unicode
 
@@ -61,8 +66,11 @@ def log_exception(err):
        crash in the exception despite our intent to
        only log the results."""
 
-    enc = locale.getpreferredencoding() or 'ascii'
-    log.debug("Exception generated: {}".format(str(err).decode(enc, 'ignore')))
+    if PYVER == 2:
+        enc = locale.getpreferredencoding() or 'ascii'
+        log.debug("Exception generated: {}".format(str(err).decode(enc, 'ignore')))
+    else:
+        log.debug("Exception generated: {}".format(err))
 
 
 def _documents_folder():
