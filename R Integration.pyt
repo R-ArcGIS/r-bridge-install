@@ -44,15 +44,7 @@ class UpdateBindings(object):
         validator = getattr(self, 'ToolValidator', None)
 
         if not parameters[0].altered:
-            # check the registry 'Current' version only
-            if rtools.r_version(True):
-                parameters[0].value = rtools.r_version(True)
-                parameters[0].enabled = False
-            else:
-                # otherwise, pull up the list of installed versions
-                # and allow the user to select one to set.
-                r_versions = rtools.r_version_dict()
-                parameters[0].filter.list = r_versions.keys()
+            parameters[0] = get_rversion_param(parameters[0])
         if validator:
             return validator(parameters).updateParameters()
 
@@ -226,21 +218,7 @@ class InstallBindings(object):
         validator = getattr(self, 'ToolValidator', None)
 
         if not parameters[1].altered:
-            # check the registry 'Current' version only
-            if rtools.r_version(True):
-                parameters[1].value = rtools.r_version(True)
-                parameters[1].enabled = False
-            else:
-                # otherwise, pull up the list of installed versions
-                # and allow the user to select one to set.
-                r_versions = rtools.r_version_dict()
-                if r_versions:
-                    parameters[1].filter.list = r_versions.keys()
-                else:
-                    # can't find current version, nor recurse.
-                    # R probably isn't installed.
-                    parameters[1].value = 'R not detected'
-                    parameters[1].enabled = False
+            parameters[1] = get_rversion_param(parameters[1])
         if validator:
             return validator(parameters).updateParameters()
 
@@ -267,3 +245,26 @@ def set_default_r(current_version):
     if install_path:
         # insert the values into the registry
         rtools.r_set_install(install_path, current_version)
+
+
+def get_rversion_param(parameter):
+    r_versions = rtools.r_version_dict()
+    if not r_versions:
+        # can't find current version, nor recurse.
+        # R probably isn't installed.
+        parameter.value = 'R not detected'
+        parameter.enabled = False
+    else:
+        # check the registry 'Current' version only
+        selected_ver = rtools.r_version(True)
+        selected_path = r_versions[selected_ver]
+        if selected_path and os.path.exists(selected_path):
+            parameter.value = rtools.r_version(True)
+            parameter.enabled = False
+        else:
+            # otherwise, pull up the list of installed versions
+            # and allow the user to select one to set.
+            parameter.filter.list = [k for (k, v) in
+                                     r_versions.items() if v is not None]
+
+    return parameter
