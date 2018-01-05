@@ -29,6 +29,7 @@ else:
 log = logging.getLogger(__name__)
 
 # cyptes constants
+CSIDL_PERSONAL = 5
 CSIDL_PROFILE = 40
 SHGFP_TYPE_CURRENT = 0
 
@@ -82,18 +83,24 @@ def _documents_folder():
     # first, check if the user has an R_USER variable initialized.
     documents_folder = _environ_path("R_USER")
 
-    if not documents_folder:
+    if not documents_folder or not os.path.exists(documents_folder):
         # next, check if the user has the HOME variable set
         documents_folder = _environ_path("HOME")
 
-    if not documents_folder:
+    if not documents_folder or not os.path.exists(documents_folder):
         # Call SHGetFolderPath using ctypes.
         ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
         ctypes.windll.shell32.SHGetFolderPathW(
+            0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, ctypes_buffer)
+        documents_folder = ctypes_buffer.value
+
+    # if we can't get the CSIDL_PERSONAL directory, fall back on manual
+    # construction of the path.
+    if not documents_folder or not os.path.exists(documents_folder):
+        ctypes_buffer = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        ctypes.windll.shell32.SHGetFolderPathW(
             0, CSIDL_PROFILE, 0, SHGFP_TYPE_CURRENT, ctypes_buffer)
-        # This isn't a language-independent way, but CSIDL_PERSONAL gets
-        # the wrong path.
-        # TODO: Test in non-English locales.
+
         documents_folder = os.path.join(ctypes_buffer.value, "Documents")
 
     return documents_folder
