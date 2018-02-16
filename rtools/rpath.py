@@ -69,7 +69,10 @@ def log_exception(err):
 
     if PYVER == 2:
         enc = locale.getpreferredencoding() or 'ascii'
-        log.debug("Exception generated: {}".format(str(err).decode(enc, 'ignore')))
+        try:
+            log.debug("Exception generated: {}".format(str(err).decode(enc, 'ignore')))
+        Except UnicodeDecodeError as e:
+            log.debug("Exception generated, but can't decode it.")
     else:
         log.debug("Exception generated: {}".format(err))
 
