@@ -71,7 +71,7 @@ def log_exception(err):
         enc = locale.getpreferredencoding() or 'ascii'
         try:
             log.debug("Exception generated: {}".format(str(err).decode(enc, 'ignore')))
-        Except UnicodeDecodeError as e:
+        except UnicodeDecodeError as e:
             log.debug("Exception generated, but can't decode it.")
     else:
         log.debug("Exception generated: {}".format(err))
