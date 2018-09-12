@@ -20,6 +20,7 @@ latest_url = '{API_URL}/repos/{org}/{project}/releases/latest'.format(
 def save_url(url, output_path):
     """Save a URL to disk."""
     valid_types = ['application/zip', 'application/octet-stream']
+    r = None
     for _ in range(5):
         try:
             r = request.urlopen(url)
@@ -28,18 +29,21 @@ def save_url(url, output_path):
             arcpy.AddError("Unable to access '{}', {}.".format(
                 url, e.reason))
         except request.URLError as e:
+            arcpy.AddWarning("Access failed, trying again.")
             # retry all URLErrors
             time.sleep(3)
 
-    if r.headers['content-type'] in valid_types and r.code == 200:
+    if r and r.headers['content-type'] in valid_types and r.code == 200:
         arcpy.AddMessage("Saving URL to '{}'".format(output_path))
         with open(output_path, 'wb') as f:
             f.write(r.read())
     else:
         arcpy.AddError("Unable to access '{}', invalid content.".format(url))
-        arcpy.AddError("Content type: {}, response code: {}".format(
-            r.headers['content-type'], r.code))
-
+        if r:
+            arcpy.AddError("Content type: {}, response code: {}".format(
+                r.headers['content-type'], r.code))
+        else:
+            arcpy.AddError("Never received valid content")
 
 def parse_json_url(url):
     """Parse and return a JSON response from a URL."""
