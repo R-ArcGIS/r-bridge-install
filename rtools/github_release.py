@@ -42,8 +42,12 @@ def save_url(url, output_path):
         if r:
             arcpy.AddError("Content type: {}, response code: {}".format(
                 r.headers['content-type'], r.code))
-        else:
-            arcpy.AddError("Never received valid content")
+        msg = "Either a connectivity issue or restrictions on downloading " + \
+              "prevented the tool from downloading. Please download the " + \
+              "zip manually from {}".format(latest_url) + " and move it to " + \
+              "the same location as this toolbox."
+        arcpy.AddError(msg)
+
 
 def parse_json_url(url):
     """Parse and return a JSON response from a URL."""
