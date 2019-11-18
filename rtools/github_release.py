@@ -26,8 +26,11 @@ def save_url(url, output_path):
             r = request.urlopen(url)
             break
         except request.HTTPError as e:
-            arcpy.AddError("Unable to access '{}', {}.".format(
-                url, e.reason))
+            reason = "None given"
+            if e.reason:
+                reason = e.reason
+            arcpy.AddError("Unable to access '{}', (reason: {}).".format(
+                url, reason))
         except request.URLError as e:
             arcpy.AddWarning("Access failed, trying again.")
             # retry all URLErrors
