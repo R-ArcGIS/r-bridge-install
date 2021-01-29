@@ -34,7 +34,7 @@ The clip below shows how to download, install and verify proper installation of 
 
 ![](https://github.com/R-ArcGIS/r-bridge-install/blob/master/img/r-bridge-install-arcmap.png)
 
- - Run the `Install R bindings` script. You can then test that the bridge is able to see your R installation by running the `Print R Version` and `R Installation Details` tools, and running the included [sample tools](https://github.com/R-ArcGIS/r-bridge/tree/master/src/package/inst/examples).
+ - Run the `Install R bindings` script. You can then test that the bridge is able to see your R installation by running the `Print R Version` and `R Installation Details` tools, and running the included [sample tools](https://github.com/R-ArcGIS/r-bridge/tree/master/inst/examples).
 
 ### ArcGIS Pro 1.1+
  - In the [Project pane](https://pro.arcgis.com/en/pro-app/help/projects/the-project-pane.htm), either navigate to a folder connection containing the Python toolbox, or right click on *Toolboxes* > *Add Toolbox* and navigate to the location of the Python toolbox.
