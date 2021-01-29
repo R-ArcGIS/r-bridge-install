@@ -232,39 +232,49 @@ def install_package(overwrite=False, r_library_path=r_lib_path()):
 
     # we have a release, write it to disk for installation
     with mkdtemp() as temp_dir:
-        package_path = os.path.join(temp_dir, zip_name)
-        if local_install:
-            arcpy.AddMessage("Found local copy of binding, installing from zip")
-            shutil.copyfile(zip_path, package_path)
+        # For R 4.0+, check version from GitHub but install via repo
+        if r_version() and r_version().split(".")[0] == '4':
+            cmd = "install.packages(\"arcgisbinding\", repos=\"https://r.esri.com\", type=\"win.binary\")"
+            install_script = os.path.join(temp_dir, 'install.R')
+            with open(install_script, 'w') as f:
+                f.write(cmd)
+            rcmd_return = execute_r("Rscript", install_script)
+            if rcmd_return != 0:
+                arcpy.AddError("Failed to install bridge with `install.packages`, try manualy running the command `{cmd}` from an R session or RStudio.")
         else:
-            save_url(download_url, package_path)
-        if os.path.exists(package_path):
-            # TODO -- need to do UAC escalation here?
-            # call the R installation script
-            rcmd_return = 0
-            if r_local_install:
-                rcmd_return = execute_r('Rcmd', 'INSTALL', package_path)
-            if not r_local_install or rcmd_return != 0:
-                # if we don't have a per-user library, create one
-                r_user_lib = r_user_lib_path()
-                if not os.path.exists(r_user_lib):
-                    try:
-                        arcpy.AddMessage("Creating per-user library directory")
-                        os.makedirs(r_user_lib)
-                    except OSError:
-                        arcpy.AddWarning("Failed to create per-user library.")
-                # Can't execute Rcmd in this context, write out a temporary
-                # script and run install.packages() from within an R session.
-                install_script = os.path.join(temp_dir, 'install.R')
-                with open(install_script, 'w') as f:
-                    f.write("install.packages(\"{}\", repos=NULL)".format(
-                        package_path.replace("\\", "/")))
-                rcmd_return = execute_r("Rscript", install_script)
-                if rcmd_return != 0:
-                    arcpy.AddWarning("Fallback installation method failed.")
-        else:
-            arcpy.AddError("No package found at {}".format(package_path))
-            return
+            package_path = os.path.join(temp_dir, zip_name)
+            if local_install:
+                arcpy.AddMessage("Found local copy of binding, installing from zip")
+                shutil.copyfile(zip_path, package_path)
+            else:
+                save_url(download_url, package_path)
+            if os.path.exists(package_path):
+                # TODO -- need to do UAC escalation here?
+                # call the R installation script
+                rcmd_return = 0
+                if r_local_install:
+                    rcmd_return = execute_r('Rcmd', 'INSTALL', package_path)
+                if not r_local_install or rcmd_return != 0:
+                    # if we don't have a per-user library, create one
+                    r_user_lib = r_user_lib_path()
+                    if not os.path.exists(r_user_lib):
+                        try:
+                            arcpy.AddMessage("Creating per-user library directory")
+                            os.makedirs(r_user_lib)
+                        except OSError:
+                            arcpy.AddWarning("Failed to create per-user library.")
+                    # Can't execute Rcmd in this context, write out a temporary
+                    # script and run install.packages() from within an R session.
+                    install_script = os.path.join(temp_dir, 'install.R')
+                    with open(install_script, 'w') as f:
+                        f.write("install.packages(\"{}\", repos=NULL)".format(
+                            package_path.replace("\\", "/")))
+                    rcmd_return = execute_r("Rscript", install_script)
+                    if rcmd_return != 0:
+                        arcpy.AddWarning("Fallback installation method failed.")
+            else:
+                arcpy.AddError("No package found at {}".format(package_path))
+                return
 
     # return TMPDIR to its original value; only need it for Rcmd INSTALL
     set_env_tmpdir(orig_tmpdir)
