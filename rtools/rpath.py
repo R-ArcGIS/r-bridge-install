@@ -147,6 +147,16 @@ def _user_sids():
 
     return user_sids
 
+def _user():
+    """Get currently logged in user name."""
+    user = None
+    # getpass can try to import `pwd` which doesn't exist on windows
+    try:
+        user = getpass.getuser()
+    except ImportError:
+        # fall back on trying user
+        user = os.path.expanduser("~").split('\\')[-1]
+    return user 
 
 def _user_hive(username=None):
     """Find the registry hive for a particular user."""
@@ -208,8 +218,12 @@ def r_reg_value(lookup_key='path'):
                 log.info("OpenKey on {}, with READ + WOW64".format(r_path))
                 # HKU hive should be prepended to search
                 if key_name is 'HKU':
-                    r_path = "{}\\{}".format(
-                        _user_hive(getpass.getuser()), r_path)
+                    user = _user()
+                    # if we can't identify the user, skip this key
+                    if not user:
+                        continue
+
+                    r_path = "{}\\{}".format(_user_hive(user), r_path)
 
                 r_reg = winreg.OpenKey(root_key, r_path, 0, READ_ACCESS)
             except fnf_exception as error:
